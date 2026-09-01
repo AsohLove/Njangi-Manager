@@ -1,0 +1,26 @@
+{
+  "name": "njangi-manager",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AsohLove/Njangi-Manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/AsohLove/Njangi-Manager/issues"
+  },
+  "homepage": "https://github.com/AsohLove/Njangi-Manager#readme"
+}
