@@ -22,5 +22,10 @@
   "bugs": {
     "url": "https://github.com/AsohLove/Njangi-Manager/issues"
   },
-  "homepage": "https://github.com/AsohLove/Njangi-Manager#readme"
+  "homepage": "https://github.com/AsohLove/Njangi-Manager#readme",
+  "dependencies": {
+    "@nestjs/config": "^12.0.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "pg": "^8.23.0"
+  }
 }
