@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Res, HttpCode } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -32,5 +32,25 @@ export class AuthController {
     return {
       user: result.user,
     };
+  }
+
+  @Post('logout')
+  @HttpCode(204)
+  async logout(
+    @Res() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const sessionId = request.cookies?.session_id;
+
+    if (sessionId) {
+      await this.authService.logout(sessionId);
+    }
+
+    response.clearCookie('session_id', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
   }
 }

@@ -77,4 +77,8 @@ export class AuthService {
       session,
     };
   }
+
+  async logout(sessionId: string) {
+    await this.sessionService.delete(sessionId);
+  }
 }
