@@ -7,10 +7,14 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sessionService: SessionService,
+  ) {}
 
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase().trim();
@@ -62,10 +66,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    const session = await this.sessionService.create(user.id);
+
     return {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+      },
+      session,
     };
   }
 }
