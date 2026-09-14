@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -26,5 +26,15 @@ export class GroupsService {
       where: { ownerId },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async findOne(id: number, ownerId: number) {
+    const group = await this.prisma.group.findFirst({
+      where: { id, ownerId },
+    });
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+    return group;
   }
 }

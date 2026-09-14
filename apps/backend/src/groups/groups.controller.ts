@@ -1,4 +1,13 @@
-import { Body, Controller, Post, Req, UseGuards, Get } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  UseGuards,
+  Get,
+  ParseIntPipe,
+  Param,
+} from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -17,5 +26,13 @@ export class GroupsController {
   @Get()
   findAll(@Req() request: AuthenticatedRequest) {
     return this.groupsService.findAll(request.user.id);
+  }
+
+  @Get(':id')
+  findOne(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.groupsService.findOne(id, request.user.id);
   }
 }
