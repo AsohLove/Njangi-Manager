@@ -34,4 +34,12 @@ export class RoundsController {
   ) {
     return this.roundsService.createRound(cycleId, request.user.id, dto);
   }
+
+  @Get('rounds/:id')
+  getRound(
+    @Param('id', ParseIntPipe) roundId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.roundsService.getRound(roundId, request.user.id);
+  }
 }

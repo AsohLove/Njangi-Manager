@@ -207,4 +207,107 @@ export class RoundsService {
       },
     });
   }
+
+  async getRound(roundId: number, ownerId: number) {
+    const round = await this.prisma.round.findFirst({
+      where: {
+        id: roundId,
+        cycle: {
+          group: {
+            ownerId,
+          },
+        },
+      },
+      include: {
+        cycle: {
+          include: {
+            group: true,
+          },
+        },
+        collectorPosition: {
+          include: {
+            member: true,
+          },
+        },
+        payments: true,
+      },
+    });
+
+    if (!round) {
+      throw new NotFoundException('Round not found');
+    }
+
+    const positions = await this.prisma.position.findMany({
+      where: {
+        groupId: round.cycle.groupId,
+        isActive: true,
+      },
+      include: {
+        member: true,
+        payments: {
+          where: {
+            roundId,
+          },
+        },
+      },
+      orderBy: {
+        rotationOrder: 'asc',
+      },
+    });
+
+    const expectedAmount = positions.length * round.cycle.group.amount;
+
+    const collectedAmount = round.payments.reduce(
+      (total, payment) => total + payment.amount,
+      0,
+    );
+
+    const positionStatuses = positions.map((position) => {
+      const payment = position.payments[0];
+
+      if (!payment) {
+        return {
+          position_id: position.id,
+          member_id: position.memberId,
+          member_name: position.member.fullName,
+          expected: round.cycle.group.amount,
+          paid: 0,
+          status: 'waiting',
+          is_late: false,
+        };
+      }
+
+      const isPartial = payment.amount < round.cycle.group.amount;
+
+      return {
+        position_id: position.id,
+        member_id: position.memberId,
+        member_name: position.member.fullName,
+        expected: round.cycle.group.amount,
+        paid: payment.amount,
+        status: isPartial ? 'partly_paid' : 'paid',
+        is_late: payment.isLate,
+      };
+    });
+
+    return {
+      id: round.id,
+      cycle_id: round.cycleId,
+      number: round.number,
+      collector_position_id: round.collectorPositionId,
+      collector: {
+        position_id: round.collectorPosition.id,
+        member_id: round.collectorPosition.memberId,
+        member_name: round.collectorPosition.member.fullName,
+      },
+      selection_method: round.selectionMethod,
+      due_date: round.dueDate,
+      status: round.status,
+      expected_amount: expectedAmount,
+      collected_amount: collectedAmount,
+      positions: positionStatuses,
+      opened_at: round.openedAt,
+      closed_at: round.closedAt,
+    };
+  }
 }
