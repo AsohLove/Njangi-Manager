@@ -20,4 +20,11 @@ export class GroupsService {
       },
     });
   }
+
+  async findAll(ownerId: number) {
+    return this.prisma.group.findMany({
+      where: { ownerId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
