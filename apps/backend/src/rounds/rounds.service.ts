@@ -382,27 +382,21 @@ export class RoundsService {
         },
       });
 
-      const remainingPositions = await tx.position.count({
+      const activePositionCount = await tx.position.count({
         where: {
           groupId: round.cycle.groupId,
           isActive: true,
-          id: {
-            notIn: (
-              await tx.round.findMany({
-                where: {
-                  cycleId: round.cycleId,
-                  status: 'closed',
-                },
-                select: {
-                  collectorPositionId: true,
-                },
-              })
-            ).map((item) => item.collectorPositionId),
-          },
         },
       });
 
-      if (remainingPositions === 0) {
+      const closedRoundCount = await tx.round.count({
+        where: {
+          cycleId: round.cycleId,
+          status: 'closed',
+        },
+      });
+
+      if (closedRoundCount >= activePositionCount) {
         await tx.cycle.update({
           where: {
             id: round.cycleId,
