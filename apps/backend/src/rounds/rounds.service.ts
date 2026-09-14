@@ -5,15 +5,35 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRoundDto } from './dto/create-round.dto';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class RoundsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getEligiblePositions(cycleId: number) {
+  private calculateDueDate(
+    startDate: Date,
+    frequency: string,
+    roundNumber: number,
+  ): Date {
+    const dueDate = new Date(startDate);
+
+    if (frequency === 'weekly') {
+      dueDate.setDate(dueDate.getDate() + (roundNumber - 1) * 7);
+    } else if (frequency === 'monthly') {
+      dueDate.setMonth(dueDate.getMonth() + (roundNumber - 1));
+    }
+
+    return dueDate;
+  }
+
+  async getEligiblePositions(cycleId: number, ownerId: number) {
     const cycle = await this.prisma.cycle.findUnique({
       where: {
         id: cycleId,
+        group: {
+          ownerId,
+        },
       },
       select: {
         id: true,
@@ -143,9 +163,7 @@ export class RoundsService {
       }
 
       if (dto.method === 'app_draw') {
-        const randomIndex = Math.floor(
-          Math.random() * eligiblePositions.length,
-        );
+        const randomIndex = randomInt(eligiblePositions.length);
 
         collectorPositionId = eligiblePositions[randomIndex].id;
       } else {
@@ -167,7 +185,13 @@ export class RoundsService {
       }
     }
 
-    const dueDate = dto.due_date ? new Date(dto.due_date) : new Date();
+    const dueDate = dto.due_date
+      ? new Date(dto.due_date)
+      : this.calculateDueDate(
+          cycle.group.startDate,
+          cycle.group.frequency,
+          roundNumber,
+        );
 
     return this.prisma.round.create({
       data: {

@@ -19,8 +19,11 @@ export class RoundsController {
   constructor(private readonly roundsService: RoundsService) {}
 
   @Get('cycles/:id/eligible-positions')
-  getEligiblePositions(@Param('id', ParseIntPipe) cycleId: number) {
-    return this.roundsService.getEligiblePositions(cycleId);
+  getEligiblePositions(
+    @Param('id', ParseIntPipe) cycleId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.roundsService.getEligiblePositions(cycleId, request.user.id);
   }
 
   @Post('cycles/:id/rounds')
