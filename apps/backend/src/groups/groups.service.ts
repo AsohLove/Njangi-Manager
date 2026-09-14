@@ -37,4 +37,22 @@ export class GroupsService {
     }
     return group;
   }
+
+  async regenerateShareCode(id: number, ownerId: number) {
+    const group = await this.prisma.group.findFirst({
+      where: { id, ownerId },
+    });
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    const shareCode = randomBytes(9).toString('base64url'); // 12 characters
+
+    const updatedGroup = await this.prisma.group.update({
+      where: { id: group.id },
+      data: { shareCode },
+      select: { shareCode: true },
+    });
+    return updatedGroup;
+  }
 }

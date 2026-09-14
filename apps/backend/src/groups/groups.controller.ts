@@ -7,6 +7,7 @@ import {
   Get,
   ParseIntPipe,
   Param,
+  HttpCode,
 } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { AuthGuard } from '../auth/auth.guard';
@@ -34,5 +35,14 @@ export class GroupsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.groupsService.findOne(id, request.user.id);
+  }
+
+  @HttpCode(200)
+  @Post(':id/share-code')
+  regenerateShareCode(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.groupsService.regenerateShareCode(id, request.user.id);
   }
 }
