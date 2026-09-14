@@ -12,6 +12,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { RoundsService } from './rounds.service';
 import type { AuthenticatedRequest } from 'src/auth/authenticated-request';
 import { CreateRoundDto } from './dto/create-round.dto';
+import { CloseRoundDto } from './dto/close-round.dto';
 
 @Controller()
 @UseGuards(AuthGuard)
@@ -41,5 +42,14 @@ export class RoundsController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.roundsService.getRound(roundId, request.user.id);
+  }
+
+  @Post('rounds/:id/close')
+  closeRound(
+    @Param('id', ParseIntPipe) roundId: number,
+    @Req() request: AuthenticatedRequest,
+    @Body() dto: CloseRoundDto,
+  ) {
+    return this.roundsService.closeRound(roundId, request.user.id, dto);
   }
 }

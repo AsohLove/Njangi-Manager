@@ -6,6 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRoundDto } from './dto/create-round.dto';
 import { randomInt } from 'crypto';
+import { CloseRoundDto } from './dto/close-round.dto';
 
 @Injectable()
 export class RoundsService {
@@ -309,5 +310,114 @@ export class RoundsService {
       opened_at: round.openedAt,
       closed_at: round.closedAt,
     };
+  }
+
+  async closeRound(roundId: number, ownerId: number, dto: CloseRoundDto) {
+    const round = await this.prisma.round.findFirst({
+      where: {
+        id: roundId,
+        cycle: {
+          group: {
+            ownerId,
+          },
+        },
+      },
+      include: {
+        cycle: {
+          include: {
+            group: true,
+          },
+        },
+        payments: true,
+      },
+    });
+
+    if (!round) {
+      throw new NotFoundException('Round not found');
+    }
+
+    if (round.status !== 'open') {
+      throw new ConflictException('Round is already closed');
+    }
+
+    const expectedAmount =
+      round.cycle.group.amount *
+      (await this.prisma.position.count({
+        where: {
+          groupId: round.cycle.groupId,
+          isActive: true,
+        },
+      }));
+
+    const collectedAmount = round.payments.reduce(
+      (total, payment) => total + payment.amount,
+      0,
+    );
+
+    const shortfall = expectedAmount - collectedAmount;
+
+    if (shortfall > 0 && dto.acknowledge_shortfall !== true) {
+      throw new ConflictException(
+        'Round has a shortfall. Acknowledge the shortfall before closing',
+      );
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const payout = await tx.payout.create({
+        data: {
+          roundId: round.id,
+          positionId: round.collectorPositionId,
+          amount: collectedAmount,
+          shortfall: Math.max(shortfall, 0),
+        },
+      });
+
+      const closedRound = await tx.round.update({
+        where: {
+          id: round.id,
+        },
+        data: {
+          status: 'closed',
+          closedAt: new Date(),
+        },
+      });
+
+      const remainingPositions = await tx.position.count({
+        where: {
+          groupId: round.cycle.groupId,
+          isActive: true,
+          id: {
+            notIn: (
+              await tx.round.findMany({
+                where: {
+                  cycleId: round.cycleId,
+                  status: 'closed',
+                },
+                select: {
+                  collectorPositionId: true,
+                },
+              })
+            ).map((item) => item.collectorPositionId),
+          },
+        },
+      });
+
+      if (remainingPositions === 0) {
+        await tx.cycle.update({
+          where: {
+            id: round.cycleId,
+          },
+          data: {
+            status: 'complete',
+            completedAt: new Date(),
+          },
+        });
+      }
+
+      return {
+        round: closedRound,
+        payout,
+      };
+    });
   }
 }
