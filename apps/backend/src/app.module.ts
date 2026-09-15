@@ -8,6 +8,7 @@ import { GroupsModule } from './groups/groups.module';
 import { RoundsModule } from './rounds/rounds.module';
 import { PaymentsModule } from './payments/payments.module';
 import { MembersModule } from './members/members.module';
+import { PositionsModule } from './positions/positions.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MembersModule } from './members/members.module';
     RoundsModule,
     PaymentsModule,
     MembersModule,
+    PositionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
