@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class CreatePaymentDto {
   @IsInt()
@@ -6,10 +6,7 @@ export class CreatePaymentDto {
   position_id: number;
 
   @IsInt()
-  @Min(1)
-  amount: number;
-
   @IsOptional()
-  @IsBoolean()
-  is_late?: boolean;
+  @Min(1)
+  amount?: number;
 }
