@@ -12,6 +12,7 @@ import {
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateGroupDto } from './dto/create-group.dto';
+import { CreateMemberDto } from './dto/create-member.dto';
 import { GroupsService } from './groups.service';
 
 @Controller('groups')
@@ -44,5 +45,14 @@ export class GroupsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.groupsService.regenerateShareCode(id, request.user.id);
+  }
+
+  @Post(':id/members')
+  addMember(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateMemberDto,
+  ) {
+    return this.groupsService.addMember(id, request.user.id, dto);
   }
 }

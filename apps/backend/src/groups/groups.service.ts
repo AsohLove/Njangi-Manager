@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGroupDto } from './dto/create-group.dto';
+import { CreateMemberDto } from './dto/create-member.dto';
 
 @Injectable()
 export class GroupsService {
@@ -16,7 +21,7 @@ export class GroupsService {
         frequency: dto.frequency,
         startDate: new Date(dto.start_date),
         orderMode: dto.order_mode,
-        shareCode: randomBytes(9).toString('base64url'), // 12 characters
+        shareCode: randomBytes(9).toString('base64url'),
       },
     });
   }
@@ -46,13 +51,41 @@ export class GroupsService {
       throw new NotFoundException('Group not found');
     }
 
-    const shareCode = randomBytes(9).toString('base64url'); // 12 characters
+    const shareCode = randomBytes(9).toString('base64url');
 
-    const updatedGroup = await this.prisma.group.update({
+    return this.prisma.group.update({
       where: { id: group.id },
       data: { shareCode },
       select: { shareCode: true },
     });
-    return updatedGroup;
+  }
+
+  async addMember(groupId: number, ownerId: number, dto: CreateMemberDto) {
+    const group = await this.prisma.group.findFirst({
+      where: { id: groupId, ownerId },
+      include: {
+        cycles: {
+          where: { status: 'active' },
+        },
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    if (group.cycles.length > 0) {
+      throw new ConflictException(
+        'Cannot add a member while a cycle is active',
+      );
+    }
+
+    return this.prisma.member.create({
+      data: {
+        groupId,
+        fullName: dto.full_name.trim(),
+        phone: dto.phone ? dto.phone.trim() : null,
+      },
+    });
   }
 }
