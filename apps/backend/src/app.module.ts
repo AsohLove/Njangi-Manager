@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { GroupsModule } from './groups/groups.module';
 import { RoundsModule } from './rounds/rounds.module';
 import { PaymentsModule } from './payments/payments.module';
+import { FinesModule } from './fines/fines.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PaymentsModule } from './payments/payments.module';
     GroupsModule,
     RoundsModule,
     PaymentsModule,
+    FinesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
