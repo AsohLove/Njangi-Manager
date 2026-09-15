@@ -13,6 +13,7 @@ import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { CreateMemberDto } from './dto/create-member.dto';
+import { CreatePositionDto } from './dto/create-position.dto';
 import { GroupsService } from './groups.service';
 
 @Controller('groups')
@@ -54,5 +55,14 @@ export class GroupsController {
     @Body() dto: CreateMemberDto,
   ) {
     return this.groupsService.addMember(id, request.user.id, dto);
+  }
+
+  @Post(':id/positions')
+  addPosition(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreatePositionDto,
+  ) {
+    return this.groupsService.addPosition(id, request.user.id, dto);
   }
 }

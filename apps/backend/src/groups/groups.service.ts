@@ -7,6 +7,7 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { CreateMemberDto } from './dto/create-member.dto';
+import { CreatePositionDto } from './dto/create-position.dto';
 
 @Injectable()
 export class GroupsService {
@@ -85,6 +86,41 @@ export class GroupsService {
         groupId,
         fullName: dto.full_name.trim(),
         phone: dto.phone ? dto.phone.trim() : null,
+      },
+    });
+  }
+
+  async addPosition(groupId: number, ownerId: number, dto: CreatePositionDto) {
+    const group = await this.prisma.group.findFirst({
+      where: { id: groupId, ownerId },
+      include: {
+        cycles: { where: { status: 'active' } },
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    if (group.cycles.length > 0) {
+      throw new ConflictException(
+        'Cannot add a position while a cycle is active',
+      );
+    }
+
+    const member = await this.prisma.member.findFirst({
+      where: { id: dto.member_id, groupId },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Member not found in this group');
+    }
+
+    return this.prisma.position.create({
+      data: {
+        groupId,
+        memberId: dto.member_id,
+        isActive: true,
       },
     });
   }
