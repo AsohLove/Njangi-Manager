@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { GroupsModule } from './groups/groups.module';
 import { RoundsModule } from './rounds/rounds.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { RoundsModule } from './rounds/rounds.module';
     AuthModule,
     GroupsModule,
     RoundsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
