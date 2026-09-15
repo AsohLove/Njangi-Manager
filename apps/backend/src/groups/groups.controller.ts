@@ -8,7 +8,7 @@ import {
   ParseIntPipe,
   Param,
   HttpCode,
-  Put
+  Put,
 } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { AuthGuard } from '../auth/auth.guard';

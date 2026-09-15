@@ -158,11 +158,9 @@ export class GroupsService {
       );
     }
 
-    const hasRound1Opened = group.cycles.some((cycle) =>
-      cycle.rounds.some((round) => round.openedAt !== null),
-    );
+    const activeCycle = group.cycles.find((c) => c.status === 'active');
 
-    if (hasRound1Opened) {
+    if (activeCycle && activeCycle.rounds.length > 0) {
       throw new ConflictException(
         'Cannot reorder positions once Round 1 has opened',
       );
