@@ -281,7 +281,7 @@ export class FinesService {
         applied_at: fine.appliedAt,
         paid_at: fine.paidAt,
       })),
-      next_after: nextAfter,
+      next: nextAfter,
     };
   }
 }

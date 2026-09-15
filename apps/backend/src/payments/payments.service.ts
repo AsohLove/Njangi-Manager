@@ -86,86 +86,95 @@ export class PaymentsService {
 
   async createBulkPayment(
     roundId: number,
-    ownerId: number,
+    userId: number,
     dto: CreateBulkPaymentDto,
   ) {
-    const round = await this.prisma.round.findFirst({
-      where: {
-        id: roundId,
-        cycle: {
-          group: {
-            ownerId,
+    return this.prisma.$transaction(async (tx) => {
+      const round = await tx.round.findFirst({
+        where: {
+          id: roundId,
+          cycle: {
+            group: {
+              ownerId: userId,
+            },
           },
         },
-      },
-      include: {
-        cycle: {
-          include: {
-            group: true,
+        include: {
+          cycle: {
+            include: {
+              group: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!round) {
-      throw new NotFoundException('Round not found');
-    }
+      if (!round) {
+        throw new NotFoundException('Round not found');
+      }
 
-    if (round.status !== 'open') {
-      throw new ConflictException('Cannot record payments for a closed round');
-    }
+      if (round.status === 'closed') {
+        throw new ConflictException('Round is closed');
+      }
 
-    const member = await this.prisma.member.findFirst({
-      where: {
-        id: dto.member_id,
-        groupId: round.cycle.groupId,
-      },
-      include: {
-        positions: {
-          where: {
-            isActive: true,
+      const member = await tx.member.findFirst({
+        where: {
+          id: dto.member_id,
+          groupId: round.cycle.groupId,
+        },
+        include: {
+          positions: {
+            where: {
+              isActive: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!member) {
-      throw new BadRequestException('Member is not in this group');
-    }
+      if (!member) {
+        throw new BadRequestException('Member does not belong to this group');
+      }
 
-    const existingPayments = await this.prisma.payment.findMany({
-      where: {
+      const positionIds = member.positions.map((position) => position.id);
+
+      if (positionIds.length === 0) {
+        throw new BadRequestException('Member has no active positions');
+      }
+
+      const existingPayments = await tx.payment.findMany({
+        where: {
+          roundId,
+          positionId: {
+            in: positionIds,
+          },
+        },
+      });
+
+      const paidPositionIds = new Set(
+        existingPayments.map((payment) => payment.positionId),
+      );
+
+      const unpaidPositions = member.positions.filter(
+        (position) => !paidPositionIds.has(position.id),
+      );
+
+      const payments = unpaidPositions.map((position) => ({
         roundId,
-        positionId: {
-          in: member.positions.map((position) => position.id),
-        },
-      },
-      select: {
-        positionId: true,
-      },
+        positionId: position.id,
+        amount: round.cycle.group.amount,
+      }));
+
+      if (payments.length === 0) {
+        throw new ConflictException('All member positions are already paid');
+      }
+
+      const createdPayments = await tx.payment.createManyAndReturn({
+        data: payments,
+      });
+
+      return {
+        items: createdPayments,
+      };
     });
-
-    const paidPositionIds = new Set(
-      existingPayments.map((payment) => payment.positionId),
-    );
-
-    const unpaidPositions = member.positions.filter(
-      (position) => !paidPositionIds.has(position.id),
-    );
-
-    const payments = await this.prisma.$transaction(
-      unpaidPositions.map((position) =>
-        this.prisma.payment.create({
-          data: {
-            roundId,
-            positionId: position.id,
-            amount: round.cycle.group.amount,
-          },
-        }),
-      ),
-    );
-
-    return payments;
   }
 
   async updatePayment(
