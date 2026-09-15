@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -74,22 +75,16 @@ export class RoundsService {
     });
   }
 
-  async createRound(cycleId: number, ownerId: number, dto: CreateRoundDto) {
+  async createRound(cycleId: number, userId: number, dto: CreateRoundDto) {
     const cycle = await this.prisma.cycle.findFirst({
       where: {
         id: cycleId,
         group: {
-          ownerId,
+          ownerId: userId,
         },
       },
       include: {
         group: true,
-        rounds: {
-          orderBy: {
-            number: 'desc',
-          },
-          take: 1,
-        },
       },
     });
 
@@ -101,111 +96,124 @@ export class RoundsService {
       throw new ConflictException('Cycle is not active');
     }
 
-    const openRound = await this.prisma.round.findFirst({
-      where: {
-        cycleId,
-        status: 'open',
-      },
-    });
-
-    if (openRound) {
-      throw new ConflictException('A round is already open');
-    }
-
-    const previousRound = cycle.rounds[0];
-
-    const roundNumber = previousRound ? previousRound.number + 1 : 1;
-
-    const collectedRounds = await this.prisma.round.findMany({
-      where: {
-        cycleId,
-      },
-      select: {
-        collectorPositionId: true,
-      },
-    });
-
-    const collectedPositionIds = collectedRounds.map(
-      (round) => round.collectorPositionId,
-    );
-
-    const eligiblePositions = await this.prisma.position.findMany({
-      where: {
-        groupId: cycle.groupId,
-        isActive: true,
-        id: {
-          notIn: collectedPositionIds,
+    return this.prisma.$transaction(async (tx) => {
+      const openRound = await tx.round.findFirst({
+        where: {
+          cycleId,
+          status: 'open',
         },
-      },
-      orderBy: {
-        rotationOrder: 'asc',
-      },
-    });
+      });
 
-    if (eligiblePositions.length === 0) {
-      throw new ConflictException('No eligible positions remain in this cycle');
-    }
-
-    let collectorPositionId: number;
-
-    if (cycle.group.orderMode === 'fixed') {
-      if (dto.method !== 'auto') {
-        throw new ConflictException(
-          'Fixed order groups must use auto selection',
-        );
+      if (openRound) {
+        throw new ConflictException('Cycle already has an open round');
       }
 
-      collectorPositionId = eligiblePositions[0].id;
-    } else {
-      if (dto.method !== 'app_draw' && dto.method !== 'manual_draw') {
-        throw new ConflictException(
-          'Ballot groups must use app_draw or manual_draw',
-        );
+      const roundNumber =
+        (await tx.round.count({
+          where: { cycleId },
+        })) + 1;
+
+      const activePositions = await tx.position.findMany({
+        where: {
+          groupId: cycle.groupId,
+          isActive: true,
+        },
+        orderBy: {
+          rotationOrder: 'asc',
+        },
+      });
+
+      if (activePositions.length === 0) {
+        throw new ConflictException('No active positions available');
       }
 
-      if (dto.method === 'app_draw') {
-        const randomIndex = randomInt(eligiblePositions.length);
+      const previousRounds = await tx.round.findMany({
+        where: {
+          cycleId,
+        },
+        select: {
+          collectorPositionId: true,
+        },
+      });
 
-        collectorPositionId = eligiblePositions[randomIndex].id;
+      const previousCollectorIds = new Set(
+        previousRounds.map((round) => round.collectorPositionId),
+      );
+
+      const eligiblePositions = activePositions.filter(
+        (position) => !previousCollectorIds.has(position.id),
+      );
+
+      if (eligiblePositions.length === 0) {
+        throw new ConflictException('No eligible positions remain');
+      }
+
+      let collectorPositionId: number;
+      let eligiblePositionIds: number[] | undefined = undefined;
+
+      if (cycle.group.orderMode === 'fixed') {
+        if (dto.method !== 'auto') {
+          throw new BadRequestException('Fixed order requires auto selection');
+        }
+
+        collectorPositionId = eligiblePositions[0].id;
       } else {
-        if (!dto.collector_position_id) {
-          throw new ConflictException(
-            'collector_position_id is required for manual_draw',
+        if (dto.method !== 'app_draw' && dto.method !== 'manual_draw') {
+          throw new BadRequestException(
+            'Ballot order requires app_draw or manual_draw',
           );
         }
 
-        const selectedPosition = eligiblePositions.find(
-          (position) => position.id === dto.collector_position_id,
-        );
+        eligiblePositionIds = eligiblePositions.map((position) => position.id);
 
-        if (!selectedPosition) {
-          throw new ConflictException('Selected position is not eligible');
+        if (dto.method === 'app_draw') {
+          const index = randomInt(0, eligiblePositions.length);
+
+          collectorPositionId = eligiblePositions[index].id;
+        } else {
+          if (!dto.collector_position_id) {
+            throw new BadRequestException(
+              'collector_position_id is required for manual_draw',
+            );
+          }
+
+          const selectedIsEligible = eligiblePositions.some(
+            (position) => position.id === dto.collector_position_id,
+          );
+
+          if (!selectedIsEligible) {
+            throw new BadRequestException('Selected position is not eligible');
+          }
+
+          collectorPositionId = dto.collector_position_id;
         }
-
-        collectorPositionId = selectedPosition.id;
       }
-    }
 
-    const dueDate = dto.due_date
-      ? new Date(dto.due_date)
-      : this.calculateDueDate(
-          cycle.group.startDate,
-          cycle.group.frequency,
-          roundNumber,
-        );
+      const dueDate = this.calculateDueDate(
+        cycle.group.startDate,
+        cycle.group.frequency,
+        roundNumber,
+      );
 
-    return this.prisma.round.create({
-      data: {
-        cycleId,
-        number: roundNumber,
-        collectorPositionId,
-        selectionMethod: dto.method,
-        eligiblePositionIds:
-          cycle.group.orderMode === 'ballot'
-            ? eligiblePositions.map((position) => position.id)
-            : undefined,
-        dueDate,
-      },
+      const round = await tx.round.create({
+        data: {
+          cycleId,
+          number: roundNumber,
+          collectorPositionId,
+          selectionMethod: dto.method,
+          eligiblePositionIds,
+          dueDate,
+        },
+        include: {
+          collectorPosition: {
+            include: {
+              member: true,
+            },
+          },
+        },
+      });
+
+      return round;
     });
   }
 
