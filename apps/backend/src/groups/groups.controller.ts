@@ -8,10 +8,14 @@ import {
   ParseIntPipe,
   Param,
   HttpCode,
+  Put,
 } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateGroupDto } from './dto/create-group.dto';
+import { CreateMemberDto } from './dto/create-member.dto';
+import { CreatePositionDto } from './dto/create-position.dto';
+import { UpdatePositionOrderDto } from './dto/update-position-order.dto';
 import { GroupsService } from './groups.service';
 
 @Controller('groups')
@@ -44,5 +48,33 @@ export class GroupsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.groupsService.regenerateShareCode(id, request.user.id);
+  }
+
+  @Post(':id/members')
+  addMember(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateMemberDto,
+  ) {
+    return this.groupsService.addMember(id, request.user.id, dto);
+  }
+
+  @Post(':id/positions')
+  addPosition(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreatePositionDto,
+  ) {
+    return this.groupsService.addPosition(id, request.user.id, dto);
+  }
+
+  @HttpCode(204)
+  @Put(':id/positions/order')
+  updatePositionsOrder(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePositionOrderDto,
+  ) {
+    return this.groupsService.updatePositionsOrder(id, request.user.id, dto);
   }
 }
