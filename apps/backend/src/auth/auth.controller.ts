@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res, HttpCode } from '@nestjs/common';
+import { Body, Controller, Post, Res, HttpCode, Req } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -37,7 +37,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(204)
   async logout(
-    @Res() request: Request,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
     const sessionId = request.cookies?.session_id;

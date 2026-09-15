@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateFineRuleDto } from './dto/create-fine-rule.dto';
 import { UpdateFineRuleDto } from './dto/update-fine-rule.dto';
 import { CreateFineDto } from './dto/create-fine.dto';
+import { ListFinesDto } from './dto/list-fines.dto';
 
 @Injectable()
 export class FinesService {
@@ -218,5 +219,69 @@ export class FinesService {
     });
 
     return paidFine;
+  }
+
+  async getFines(groupId: number, ownerId: number, query: ListFinesDto) {
+    const group = await this.prisma.group.findFirst({
+      where: {
+        id: groupId,
+        ownerId,
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    const limit = query.limit ?? 20;
+
+    const fines = await this.prisma.fine.findMany({
+      where: {
+        groupId,
+        ...(query.status && {
+          status: query.status,
+        }),
+        ...(query.member_id && {
+          memberId: query.member_id,
+        }),
+        ...(query.after && {
+          id: {
+            lt: query.after,
+          },
+        }),
+      },
+      include: {
+        member: true,
+        rule: true,
+        round: true,
+      },
+      orderBy: {
+        id: 'desc',
+      },
+      take: limit + 1,
+    });
+
+    const hasMore = fines.length > limit;
+
+    const items = hasMore ? fines.slice(0, limit) : fines;
+
+    const nextAfter = hasMore ? items[items.length - 1].id : null;
+
+    return {
+      items: items.map((fine) => ({
+        id: fine.id,
+        member_id: fine.memberId,
+        member_name: fine.member.fullName,
+        rule_id: fine.ruleId,
+        rule_name: fine.rule.name,
+        round_id: fine.roundId,
+        amount: fine.amount,
+        note: fine.note,
+        status: fine.status,
+        applied_at: fine.appliedAt,
+        paid_at: fine.paidAt,
+      })),
+      next_after: nextAfter,
+    };
   }
 }

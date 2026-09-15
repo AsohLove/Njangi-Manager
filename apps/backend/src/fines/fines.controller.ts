@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { CreateFineRuleDto } from './dto/create-fine-rule.dto';
 import { UpdateFineRuleDto } from './dto/update-fine-rule.dto';
 import { FinesService } from './fines.service';
 import { CreateFineDto } from './dto/create-fine.dto';
+import { ListFinesDto } from './dto/list-fines.dto';
 
 @Controller()
 @UseGuards(AuthGuard)
@@ -71,5 +73,14 @@ export class FinesController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.finesService.payFine(fineId, request.user.id);
+  }
+
+  @Get('groups/:id/fines')
+  getFines(
+    @Param('id', ParseIntPipe) groupId: number,
+    @Req() request: AuthenticatedRequest,
+    @Query() query: ListFinesDto,
+  ) {
+    return this.finesService.getFines(groupId, request.user.id, query);
   }
 }
