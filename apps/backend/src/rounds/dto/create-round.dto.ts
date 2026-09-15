@@ -6,7 +6,7 @@ export class CreateRoundDto {
   due_date?: string;
 
   @IsIn(['auto', 'app_draw', 'manual_draw'])
-  method: 'auto' | 'app_draw' | 'manual_draw';
+  method!: 'auto' | 'app_draw' | 'manual_draw';
 
   @IsOptional()
   @IsInt()

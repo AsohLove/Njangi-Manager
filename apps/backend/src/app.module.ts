@@ -10,6 +10,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { MembersModule } from './members/members.module';
 import { PositionsModule } from './positions/positions.module';
 import { CyclesModule } from './cycles/cycles.module';
+import { FinesModule } from './fines/fines.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CyclesModule } from './cycles/cycles.module';
     MembersModule,
     PositionsModule,
     CyclesModule,
+    FinesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
