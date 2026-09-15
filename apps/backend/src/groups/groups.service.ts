@@ -16,16 +16,35 @@ export class GroupsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(ownerId: number, dto: CreateGroupDto) {
-    return this.prisma.group.create({
-      data: {
-        ownerId,
-        name: dto.name.trim(),
-        amount: dto.amount,
-        frequency: dto.frequency,
-        startDate: new Date(dto.start_date),
-        orderMode: dto.order_mode,
-        shareCode: randomBytes(9).toString('base64url'),
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const group = await tx.group.create({
+        data: {
+          ownerId,
+          name: dto.name.trim(),
+          amount: dto.amount,
+          frequency: dto.frequency,
+          startDate: new Date(dto.start_date),
+          orderMode: dto.order_mode,
+          shareCode: randomBytes(9).toString('base64url'),
+        },
+      });
+
+      await tx.fineRule.createMany({
+        data: [
+          {
+            groupId: group.id,
+            name: 'Late payment',
+            defaultAmount: 1000,
+          },
+          {
+            groupId: group.id,
+            name: 'Missed payment',
+            defaultAmount: 2000,
+          },
+        ],
+      });
+
+      return group;
     });
   }
 
