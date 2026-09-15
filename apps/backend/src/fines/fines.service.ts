@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -6,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFineRuleDto } from './dto/create-fine-rule.dto';
 import { UpdateFineRuleDto } from './dto/update-fine-rule.dto';
+import { CreateFineDto } from './dto/create-fine.dto';
 
 @Injectable()
 export class FinesService {
@@ -122,5 +124,99 @@ export class FinesService {
         id: ruleId,
       },
     });
+  }
+
+  async createFine(groupId: number, ownerId: number, dto: CreateFineDto) {
+    const group = await this.prisma.group.findFirst({
+      where: {
+        id: groupId,
+        ownerId,
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: dto.member_id,
+        groupId,
+      },
+    });
+
+    if (!member) {
+      throw new BadRequestException('Member is not in this group');
+    }
+
+    const rule = await this.prisma.fineRule.findFirst({
+      where: {
+        id: dto.rule_id,
+        groupId,
+      },
+    });
+
+    if (!rule) {
+      throw new BadRequestException('Fine rule is not in this group');
+    }
+
+    if (dto.round_id !== undefined) {
+      const round = await this.prisma.round.findFirst({
+        where: {
+          id: dto.round_id,
+          cycle: {
+            groupId,
+          },
+        },
+      });
+
+      if (!round) {
+        throw new BadRequestException('Round is not in this group');
+      }
+    }
+
+    const amount = dto.amount ?? rule.defaultAmount;
+
+    return this.prisma.fine.create({
+      data: {
+        groupId,
+        ruleId: rule.id,
+        memberId: member.id,
+        roundId: dto.round_id,
+        amount,
+        note: dto.note,
+      },
+    });
+  }
+
+  async payFine(fineId: number, ownerId: number) {
+    const fine = await this.prisma.fine.findFirst({
+      where: {
+        id: fineId,
+        group: {
+          ownerId,
+        },
+      },
+    });
+
+    if (!fine) {
+      throw new NotFoundException('Fine not found');
+    }
+
+    if (fine.status === 'paid') {
+      throw new ConflictException('Fine is already paid');
+    }
+
+    const paidFine = await this.prisma.fine.update({
+      where: {
+        id: fineId,
+      },
+      data: {
+        status: 'paid',
+        paidAt: new Date(),
+      },
+    });
+
+    return paidFine;
   }
 }

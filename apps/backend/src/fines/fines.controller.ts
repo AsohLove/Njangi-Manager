@@ -15,6 +15,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { CreateFineRuleDto } from './dto/create-fine-rule.dto';
 import { UpdateFineRuleDto } from './dto/update-fine-rule.dto';
 import { FinesService } from './fines.service';
+import { CreateFineDto } from './dto/create-fine.dto';
 
 @Controller()
 @UseGuards(AuthGuard)
@@ -53,5 +54,22 @@ export class FinesController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.finesService.deleteFineRule(ruleId, request.user.id);
+  }
+
+  @Post('groups/:id/fines')
+  createFine(
+    @Param('id', ParseIntPipe) groupId: number,
+    @Req() request: AuthenticatedRequest,
+    @Body() dto: CreateFineDto,
+  ) {
+    return this.finesService.createFine(groupId, request.user.id, dto);
+  }
+
+  @Post('fines/:id/pay')
+  payFine(
+    @Param('id', ParseIntPipe) fineId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.finesService.payFine(fineId, request.user.id);
   }
 }
