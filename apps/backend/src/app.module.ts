@@ -15,6 +15,8 @@ import { FundModule } from './fund/fund.module';
 import { AdjustmentsService } from './adjustments/adjustments.service';
 import { AdjustmentsController } from './adjustments/adjustments.controller';
 import { AdjustmentsModule } from './adjustments/adjustments.module';
+import { LedgerModule } from './ledger/ledger.module';
+import { MemberSummaryModule } from './member-summary/member-summary.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { AdjustmentsModule } from './adjustments/adjustments.module';
     FinesModule,
     FundModule,
     AdjustmentsModule,
+    LedgerModule,
+    MemberSummaryModule,
   ],
   controllers: [AppController, AdjustmentsController],
   providers: [AppService, AdjustmentsService],
