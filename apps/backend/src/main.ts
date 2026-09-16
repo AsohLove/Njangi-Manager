@@ -12,6 +12,8 @@ async function bootstrap() {
     credentials: true,
   });
 
+  const unusedTestVariable ="coderabbit";
+
   app.useGlobalFilters(new HttpExceptionFilter());
 
   app.use(cookieParser());
