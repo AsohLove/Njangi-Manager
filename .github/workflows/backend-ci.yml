@@ -35,6 +35,8 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate --config prisma7.config.ts
+        env:
+            DATABASE_URL: postgresql://postgres:postgres@localhost:5432/njangi_manager
 
       - name: Build backend
         run: npm run build
