@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ListLedgerDto } from './dto/list-ledger.dto';
 
@@ -86,6 +90,9 @@ export class LedgerService {
         this.prisma.fundSpending.findMany({
           where: {
             groupId,
+            ...(dto.member_id || dto.round_id
+              ? { id: -1 } // No spending entries if member_id or round_id is specified
+              : {}),
           },
         }),
 
@@ -161,9 +168,17 @@ export class LedgerService {
       return b.id - a.id;
     });
 
-    const startIndex = dto.after
-      ? entries.findIndex((entry) => entry.id === dto.after) + 1
-      : 0;
+    let startIndex = 0;
+
+    if (dto.after) {
+      const cursorIndex = entries.findIndex((entry) => entry.id === dto.after);
+
+      if (cursorIndex === -1) {
+        throw new BadRequestException('Invalid ledger cursor');
+      }
+
+      startIndex = cursorIndex + 1;
+    }
 
     const page = entries.slice(startIndex, startIndex + limit);
 

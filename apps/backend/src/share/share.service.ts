@@ -11,6 +11,13 @@ export class ShareService {
         shareCode: code,
       },
       include: {
+        members: {
+          select: {
+            id: true,
+            fullName: true,
+          },
+        },
+
         positions: {
           where: {
             isActive: true,
@@ -19,9 +26,15 @@ export class ShareService {
             rotationOrder: 'asc',
           },
           include: {
-            member: true,
+            member: {
+              select: {
+                id: true,
+                fullName: true,
+              },
+            },
           },
         },
+
         cycles: {
           where: {
             status: 'active',
@@ -38,7 +51,12 @@ export class ShareService {
               include: {
                 collectorPosition: {
                   include: {
-                    member: true,
+                    member: {
+                      select: {
+                        id: true,
+                        fullName: true,
+                      },
+                    },
                   },
                 },
                 payments: true,
@@ -46,9 +64,15 @@ export class ShareService {
             },
           },
         },
+
         fines: {
           include: {
-            member: true,
+            member: {
+              select: {
+                id: true,
+                fullName: true,
+              },
+            },
           },
         },
       },
@@ -92,9 +116,7 @@ export class ShareService {
     ]);
 
     const paidFinesTotal = paidFines._sum.amount ?? 0;
-
     const adjustmentsTotal = fundAdjustments._sum.amount ?? 0;
-
     const spendingTotal = spending._sum.amount ?? 0;
 
     const fundBalance = paidFinesTotal + adjustmentsTotal - spendingTotal;
@@ -117,22 +139,14 @@ export class ShareService {
       };
     });
 
-    const fineStatus = group.fines.reduce(
-      (result, fine) => {
-        const existing = result[fine.memberId] ?? {
-          member_id: fine.memberId,
-          member_name: fine.member.fullName,
+    const fineStatus = group.members.reduce(
+      (result, member) => {
+        result[member.id] = {
+          member_id: member.id,
+          member_name: member.fullName,
           owed: 0,
           paid: 0,
         };
-
-        if (fine.status === 'paid') {
-          existing.paid += fine.amount;
-        } else {
-          existing.owed += fine.amount;
-        }
-
-        result[fine.memberId] = existing;
 
         return result;
       },
@@ -146,6 +160,14 @@ export class ShareService {
         }
       >,
     );
+
+    for (const fine of group.fines) {
+      if (fine.status === 'paid') {
+        fineStatus[fine.memberId].paid += fine.amount;
+      } else {
+        fineStatus[fine.memberId].owed += fine.amount;
+      }
+    }
 
     return {
       name: group.name,
