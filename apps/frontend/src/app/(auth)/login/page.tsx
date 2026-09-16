@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
+  
   const loginMutation = useMutation({
     mutationFn: loginAdmin,
     onSuccess: () => {
@@ -22,7 +22,7 @@ export default function LoginPage() {
       router.push("/");
     },
     onError: (err) => {
-      setError(err?.response?.data?.message || err?.message || "Login failed");
+      setError(err?.message || "Login failed");
     },
   });
 
@@ -33,9 +33,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f6f4] flex items-start justify-center font-sans">
-      <div className="w-full  bg-[#f9faf9] overflow-hidden flex flex-col min-h-[580px]">
-        <div className="bg-[#126245] text-white p-4 pt-5 pb-4">
+    <div className="min-h-screen bg-white flex items-start justify-center font-sans">
+      <div className="w-full bg-emerald-50/20 overflow-hidden flex flex-col min-h-[580px]">
+        <div className="bg-emerald-900 text-white p-4 pt-5 pb-4">
           <h1 className="text-xl font-bold leading-tight">Njangi Manager</h1>
           <p className="text-xs text-emerald-100/90 mt-0.5 font-normal">
             The group&apos;s book, on every phone
@@ -62,7 +62,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="rose@example.cm"
                   required
-                  className="w-full px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-md outline-none focus:border-[#126245] focus:ring-1 focus:ring-[#126245] transition-colors"
+                  className="w-full px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-md outline-none focus:border-emerald-900 focus:ring-1 focus:ring-emerald-900 transition-colors"
                 />
               </div>
 
@@ -77,7 +77,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-md outline-none focus:border-[#126245] focus:ring-1 focus:ring-[#126245] transition-colors pr-9"
+                    className="w-full px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-md outline-none focus:border-emerald-900 focus:ring-1 focus:ring-emerald-900 transition-colors pr-9"
                   />
                   <button
                     type="button"
@@ -96,7 +96,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loginMutation.isPending}
-                className="w-full py-2.5 mt-1 bg-[#126245] hover:bg-[#0e4e37] text-white font-medium text-sm rounded-md transition-colors disabled:opacity-70 flex justify-center items-center"
+                className="w-full py-2.5 mt-1 bg-emerald-900 hover:bg-emerald-950 text-white font-medium text-sm rounded-md transition-colors disabled:opacity-70 flex justify-center items-center"
               >
                 {loginMutation.isPending ? "Logging in..." : "Log in"}
               </button>
@@ -107,7 +107,7 @@ export default function LoginPage() {
                 New treasurer?{" "}
                 <Link
                   href="/register"
-                  className="text-[#126245] font-semibold hover:underline"
+                  className="text-emerald-900 font-semibold hover:underline"
                 >
                   Create an account
                 </Link>
