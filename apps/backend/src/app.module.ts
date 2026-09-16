@@ -17,6 +17,7 @@ import { AdjustmentsController } from './adjustments/adjustments.controller';
 import { AdjustmentsModule } from './adjustments/adjustments.module';
 import { LedgerModule } from './ledger/ledger.module';
 import { MemberSummaryModule } from './member-summary/member-summary.module';
+import { ShareModule } from './share/share.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { MemberSummaryModule } from './member-summary/member-summary.module';
     AdjustmentsModule,
     LedgerModule,
     MemberSummaryModule,
+    ShareModule,
   ],
   controllers: [AppController, AdjustmentsController],
   providers: [AppService, AdjustmentsService],
