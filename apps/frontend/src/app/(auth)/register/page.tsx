@@ -2,11 +2,12 @@
 
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient} from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 
 import { registerAdmin } from "@/lib/api-client";
+import { Card } from "@/components/ui/Card";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -15,10 +16,13 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const queryClient = useQueryClient()
 
   const registerMutation = useMutation({
     mutationFn: registerAdmin,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(["auth-user"], data);
+      
       setError("");
       router.push("/");
     },
@@ -38,12 +42,12 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-white flex items-start justify-center font-sans">
       <div className="w-full bg-emerald-50/20 overflow-hidden flex flex-col min-h-[580px]">
-        <div className="bg-emerald-900 text-white p-4 pt-5 pb-4">
+        <Card>
           <h1 className="text-xl font-bold leading-tight">Njangi Manager</h1>
           <p className="text-xs text-emerald-100/90 mt-0.5 font-normal">
             The group&apos;s book, on every phone
           </p>
-        </div>
+        </Card>
 
         <div className="p-4 flex-1 flex flex-col">
           <div className="bg-white rounded-lg border border-gray-200/80 p-4 shadow-sm">

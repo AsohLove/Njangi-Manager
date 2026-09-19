@@ -13,7 +13,6 @@ export const apiClient = axios.create({
   },
 });
 
-
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ message?: string; errors?: unknown }>) => {
@@ -28,10 +27,12 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const customMessage =
-      error.response?.data?.message ??
-      error.message ??
-      "Something went wrong while contacting the API.";
+    const backendMessage = error.response?.data?.message;
+    const customMessage = Array.isArray(backendMessage)
+      ? backendMessage.join(", ")
+      : (backendMessage ??
+        error.message ??
+        "Something went wrong while contacting the API.");
 
     error.message = customMessage;
 
@@ -39,10 +40,23 @@ apiClient.interceptors.response.use(
   },
 );
 
+function toFormData(
+  payload: Record<string, string | number | File | null | undefined>,
+) {
+  const formData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      formData.append(key, String(value));
+    }
+  });
+
+  return formData;
+}
 
 export async function loginAdmin(credentials: loginDto) {
   const response = await apiClient.post("/auth/login", credentials);
-  return response.data;
+  return response.data.user;
 }
 
 export async function registerAdmin(data: registerDto) {
@@ -55,7 +69,27 @@ export async function logoutAdmin() {
   return response.data;
 }
 
-export async function createGroup(data: groupDto) {
-  const response = await apiClient.post("/groups", data);
+export async function getGroups() {
+  const response = await apiClient.get("/groups");
+  return response.data;
+}
+
+export async function getGroupbyId(id: number) {
+  const response = await apiClient.get(`/groups/${id}`);
+  return response.data;
+}
+
+export async function shareGroupCode(id: number) {
+  const response = await apiClient.post(`/groups/${id}/share-code`);
+  return response.data;
+}
+
+export async function createGroup(payload: groupDto | FormData) {
+  const body =
+    payload instanceof FormData
+      ? payload
+      : toFormData(payload as Record<string, string | number | File | null | undefined>);
+
+  const response = await apiClient.post("/groups", body);
   return response.data;
 }

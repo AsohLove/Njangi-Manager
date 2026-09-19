@@ -1,10 +1,18 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { loginAdmin, registerAdmin, logoutAdmin } from "@/lib/api-client";
+import { getGroups, getGroupbyId, createGroup } from "@/lib/api-client";
 
-export function useCreateAdmin() {
+export function useGroups() {
+  return useQuery({queryKey: ["groups"], queryFn: getGroups});
+}
 
+export function useGroup(id: number) {
+  return useQuery({queryKey: ["group", id], queryFn: () => getGroupbyId(id)});
+}
+
+export function useCreateGroup() {
+  return useInvalidatingCreate(createGroup, ["groups"]);
 }
 
 function useInvalidatingCreate<TPayload, TResult>(
