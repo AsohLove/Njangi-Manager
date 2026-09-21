@@ -2,7 +2,7 @@
 
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/Card";
 import { useState } from "react";
 import Link from "next/link";
@@ -15,12 +15,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const queryClient = useQueryClient();
   
   const loginMutation = useMutation({
     mutationFn: loginAdmin,
-    onSuccess: (data) => {
-      queryClient.setQueryData(["auth-user"], data);
+    onSuccess: () => {
       setError("");
       router.push("/");
     },

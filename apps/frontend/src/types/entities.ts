@@ -16,3 +16,19 @@ export type groupDto = {
   start_date: string,
   order_mode: "fixed" | "ballot"
 }
+
+export type GroupProps = {
+  id: number;
+  ownerId: number;
+  name: string;
+  amount: number;
+  frequency: string;
+  startDate: string;
+  orderMode: string;
+  shareCode: string;
+  createdAt: string;
+  // Optional parameters if present in your API response
+  status?: string;
+  totalPositions?: number;
+  collectedPositions?: number;
+}

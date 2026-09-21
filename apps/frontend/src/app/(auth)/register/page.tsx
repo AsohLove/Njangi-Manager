@@ -2,7 +2,7 @@
 
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -16,13 +16,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const queryClient = useQueryClient()
 
   const registerMutation = useMutation({
     mutationFn: registerAdmin,
-    onSuccess: (data) => {
-      queryClient.setQueryData(["auth-user"], data);
-      
+    onSuccess: () => {
       setError("");
       router.push("/");
     },

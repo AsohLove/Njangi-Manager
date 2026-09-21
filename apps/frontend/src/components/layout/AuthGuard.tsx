@@ -34,7 +34,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-screen w-full bg-slate-50">
         <SkeletonLoader />
       </div>
     );

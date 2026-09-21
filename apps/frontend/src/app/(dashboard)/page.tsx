@@ -1,32 +1,31 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link"; 
+import { Plus } from "lucide-react";
+
 import { SkeletonLoader } from "@/components/ui/Loader";
-import { useQueryClient } from "@tanstack/react-query";
-import { useGroups, useGroup } from "@/hooks/useCollection";
-import Link from "next/link";
+import { useGroups } from "@/hooks/useCollection";
+import { GroupCard } from "@/components/ui/GroupCard";
 import { Card } from "@/components/ui/Card";
+import { GroupProps } from "@/types/entities";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function Dashboard() {
-  const router = useRouter();
   const { data: groups, isLoading, isError } = useGroups();
-  const queryClient = useQueryClient();
-  const treasurer = queryClient.getQueryData<{
-    id: number;
-    email: string;
-    fullName: string;
-  }>(["auth-user"]);
+  const treasurer = useCurrentUser(); // Safely reads user without SSR hydration errors
+
   return (
-    <>
-    <Card>
+    <div className="pb-20">
+      <Card>
         <h1 className="text-xl font-bold leading-tight">My Groups</h1>
         <p className="text-xs text-emerald-100/90 mt-0.5 font-normal">
-          Treasurer: {treasurer?.fullName}
+          Treasurer: {treasurer?.fullName ?? "—"}
         </p>
-    </Card>
+      </Card>
+
       {isLoading && (
-        <section className="w-full m-2 bg-sky-50 py-12">
-          <div className="max-w-(--breakpoint-2xl) grid grid-cols-1 lg:grid-cols-2 mx-auto px-4 sm:px-6 space-y-3 space-x-3">
+        <section className="w-full bg-sky-50/50 py-6 px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-w-7xl mx-auto">
             {[1, 2, 3, 4].map((n) => (
               <div
                 key={n}
@@ -36,13 +35,32 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+
       {isError && (
-        <section className="w-full bg-sky-50 py-12 text-center text-red-500 text-sm font-medium">
-          Failed to fetch groups
+        <section className="w-full bg-red-50 py-8 text-center text-red-600 text-sm font-medium">
+          Failed to fetch groups. Please try refreshing.
         </section>
       )}
 
-      
-    </>
+      {groups && (
+        <section className="w-full bg-sky-50/50 py-6 px-4">
+          <div className="max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-3 mx-auto">
+            {groups.map((group: GroupProps) => (
+              <GroupCard key={group.id} group={group} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-200">
+        <Link
+          href="/groups/new"
+          className="flex items-center justify-center gap-2 py-3 px-4 font-semibold text-sm bg-emerald-900 text-white rounded-lg hover:bg-emerald-950 transition-colors w-full shadow-sm"
+        >
+          <Plus size={18} />
+          Create a group
+        </Link>
+      </div>
+    </div>
   );
 }

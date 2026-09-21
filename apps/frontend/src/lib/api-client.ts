@@ -56,17 +56,35 @@ function toFormData(
 
 export async function loginAdmin(credentials: loginDto) {
   const response = await apiClient.post("/auth/login", credentials);
-  return response.data.user;
+  const user = response.data.user;
+
+  if (typeof window !== "undefined" && user) {
+    window.localStorage.setItem("treasurer_user", JSON.stringify(user));
+  }
+
+  return user;
 }
 
 export async function registerAdmin(data: registerDto) {
   const response = await apiClient.post("/auth/register", data);
-  return response.data;
+  const user = response.data
+
+  if (typeof window !== "undefined" && user) {
+    window.localStorage.setItem("treasurer_user", JSON.stringify(user));
+  }
+
+  return user;
 }
 
 export async function logoutAdmin() {
   const response = await apiClient.post("/auth/logout");
-  return response.data;
+  const user = response.data;
+
+  if (typeof window !== "undefined" && user) {
+    window.localStorage.setItem("treasurer_user", JSON.stringify(user));
+  }
+
+  return user;
 }
 
 export async function getGroups() {
@@ -85,11 +103,18 @@ export async function shareGroupCode(id: number) {
 }
 
 export async function createGroup(payload: groupDto | FormData) {
-  const body =
-    payload instanceof FormData
-      ? payload
-      : toFormData(payload as Record<string, string | number | File | null | undefined>);
+  const body = payload instanceof FormData ? payload : payload;
 
   const response = await apiClient.post("/groups", body);
   return response.data;
+}
+
+export function getStoredUser() {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem("treasurer_user");
+  try {
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
 }
