@@ -106,11 +106,139 @@ export class GroupsService {
   async findOne(id: number, ownerId: number) {
     const group = await this.prisma.group.findFirst({
       where: { id, ownerId },
+      include: {
+        members: {
+          orderBy: { fullName: 'asc' },
+        },
+        positions: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                fullName: true,
+              },
+            },
+          },
+          orderBy: { rotationOrder: 'asc' },
+        },
+        cycles: {
+          where: { status: 'active' },
+          take: 1,
+          include: {
+            rounds: {
+              where: { status: 'open' },
+              take: 1,
+              include: {
+                collectorPosition: {
+                  include: {
+                    member: true,
+                  },
+                },
+                payments: {
+                  include: {
+                    position: {
+                      include: {
+                        member: true,
+                      },
+                    },
+                  },
+                },
+                fines: true,
+                adjustments: true,
+                payout: true,
+                _count: {
+                  select: { payments: true },
+                },
+              },
+            },
+          },
+        },
+        // Aggregations to compute the total Fund Balance
+        fines: {
+          where: { status: 'paid' },
+          select: { amount: true },
+        },
+        fundSpendings: {
+          select: { amount: true },
+        },
+        adjustments: {
+          where: { affectsFund: true },
+          select: { amount: true },
+        },
+      },
     });
+
     if (!group) {
       throw new NotFoundException('Group not found');
     }
-    return group;
+
+    // 1. Calculate Fund Balance:
+    //    Fund Balance = (Paid Fines + Fund Adjustments) - Fund Spendings
+    const totalFines = group.fines.reduce((sum, f) => sum + f.amount, 0);
+    const totalAdjustments = group.adjustments.reduce(
+      (sum, a) => sum + a.amount,
+      0,
+    );
+    const totalSpendings = group.fundSpendings.reduce(
+      (sum, s) => sum + s.amount,
+      0,
+    );
+    const fundBalance = totalFines + totalAdjustments - totalSpendings;
+
+    // 2. Extract Active Cycle & Open Round
+    const activeCycle = group.cycles[0] || null;
+    const openRound = activeCycle?.rounds[0] || null;
+
+    const openRoundSummary = openRound
+      ? {
+          id: openRound.id,
+          number: openRound.number,
+          dueDate: openRound.dueDate,
+          selectionMethod: openRound.selectionMethod,
+          collectorPositionId: openRound.collectorPositionId,
+          collectorName: openRound.collectorPosition?.member?.fullName ?? null,
+          paidCount: openRound._count.payments,
+          payments: openRound.payments.map((p) => ({
+            id: p.id,
+            positionId: p.positionId,
+            memberName: p.position?.member?.fullName ?? null,
+            amount: p.amount,
+            isLate: p.isLate,
+            paidAt: p.paidAt,
+          })),
+          payout: openRound.payout ?? null,
+        }
+      : null;
+
+    return {
+      id: group.id,
+      ownerId: group.ownerId,
+      name: group.name,
+      amount: group.amount,
+      frequency: group.frequency,
+      startDate: group.startDate,
+      orderMode: group.orderMode,
+      shareCode: group.shareCode,
+      createdAt: group.createdAt,
+      fundBalance,
+      members: group.members,
+      positions: group.positions.map((p) => ({
+        id: p.id,
+        memberId: p.memberId,
+        memberName: p.member.fullName,
+        rotationOrder: p.rotationOrder,
+        isActive: p.isActive,
+      })),
+      activeCycle: activeCycle
+        ? {
+            id: activeCycle.id,
+            number: activeCycle.number,
+            status: activeCycle.status,
+            startedAt: activeCycle.startedAt,
+          }
+        : null,
+      openRound: openRoundSummary,
+    };
   }
 
   async regenerateShareCode(id: number, ownerId: number) {
