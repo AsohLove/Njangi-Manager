@@ -49,9 +49,57 @@ export class GroupsService {
   }
 
   async findAll(ownerId: number) {
-    return this.prisma.group.findMany({
+    const groups = await this.prisma.group.findMany({
       where: { ownerId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { members: true },
+        },
+        cycles: {
+          where: { status: 'active' },
+          take: 1,
+          include: {
+            rounds: {
+              where: { status: 'open' },
+              take: 1,
+              include: {
+                collectorPosition: {
+                  include: {
+                    member: true,
+                  },
+                },
+                _count: {
+                  select: { payments: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return groups.map((group) => {
+      const activeCycle = group.cycles[0] || null;
+      const currentRound = activeCycle?.rounds[0] || null;
+      const collectorMember = currentRound?.collectorPosition?.member || null;
+
+      return {
+        id: group.id,
+        ownerId: group.ownerId,
+        name: group.name,
+        amount: group.amount,
+        frequency: group.frequency,
+        startDate: group.startDate,
+        orderMode: group.orderMode,
+        shareCode: group.shareCode,
+        createdAt: group.createdAt,
+        totalMembers: group._count.members,
+        currentRoundNumber: currentRound?.number ?? null,
+        collectorName: collectorMember?.fullName ?? null,
+        collectorPositionId: currentRound?.collectorPositionId ?? null,
+        paidCount: currentRound ? currentRound._count.payments : 0,
+      };
     });
   }
 
