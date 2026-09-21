@@ -126,8 +126,6 @@ export class GroupsService {
           take: 1,
           include: {
             rounds: {
-              where: { status: 'open' },
-              take: 1,
               include: {
                 collectorPosition: {
                   include: {
@@ -150,6 +148,7 @@ export class GroupsService {
                   select: { payments: true },
                 },
               },
+              orderBy: { number: 'asc' },
             },
           },
         },
@@ -185,10 +184,80 @@ export class GroupsService {
     );
     const fundBalance = totalFines + totalAdjustments - totalSpendings;
 
-    // 2. Extract Active Cycle & Open Round
+    // 2. Extract Active Cycle, All Rounds, and current Open Round
     const activeCycle = group.cycles[0] || null;
-    const openRound = activeCycle?.rounds[0] || null;
+    const allRoundsInCycle = activeCycle?.rounds || [];
+    const openRound = allRoundsInCycle.find((r) => r.status === 'open') || null;
 
+    // 3. Collect Position IDs that received payouts in past closed rounds
+    const collectedPositionIds = new Set(
+      allRoundsInCycle
+        .filter((r) => r.status === 'closed' && r.payout !== null)
+        .map((r) => r.collectorPositionId),
+    );
+
+    // 4. Map positions per member to construct "position X of Y" labels
+    const memberTotalPositions = new Map<number, number>();
+    group.positions.forEach((p) => {
+      memberTotalPositions.set(
+        p.memberId,
+        (memberTotalPositions.get(p.memberId) || 0) + 1,
+      );
+    });
+
+    const memberCurrentIndex = new Map<number, number>();
+
+    // 5. Enrich positions array for UI rendering
+    const enrichedPositions = group.positions.map((p) => {
+      // Slot label (e.g., "position 1 of 2")
+      const totalSlots = memberTotalPositions.get(p.memberId) || 1;
+      let positionLabel: string | null = null;
+
+      if (totalSlots > 1) {
+        const idx = (memberCurrentIndex.get(p.memberId) || 0) + 1;
+        memberCurrentIndex.set(p.memberId, idx);
+        positionLabel = `position ${idx} of ${totalSlots}`;
+      }
+
+      // Payout Status (For Members Screen)
+      let payoutStatus: 'COLLECTED' | 'THIS ROUND' | null = null;
+      if (openRound && openRound.collectorPositionId === p.id) {
+        payoutStatus = 'THIS ROUND';
+      } else if (collectedPositionIds.has(p.id)) {
+        payoutStatus = 'COLLECTED';
+      }
+
+      // Payment Status (For Round Screen)
+      const payment = openRound?.payments.find(
+        (pay) => pay.positionId === p.id,
+      );
+      let paymentStatus: 'PAID' | 'PARTLY' | 'WAITING' = 'WAITING';
+      let amountPaid = 0;
+
+      if (payment) {
+        amountPaid = payment.amount;
+        if (payment.amount >= group.amount) {
+          paymentStatus = 'PAID';
+        } else if (payment.amount > 0) {
+          paymentStatus = 'PARTLY';
+        }
+      }
+
+      return {
+        id: p.id,
+        memberId: p.memberId,
+        memberName: p.member.fullName,
+        rotationOrder: p.rotationOrder,
+        isActive: p.isActive,
+        positionLabel,
+        payoutStatus,
+        paymentStatus,
+        amountPaid,
+        isLate: payment?.isLate ?? false,
+      };
+    });
+
+    // 6. Format Open Round Summary
     const openRoundSummary = openRound
       ? {
           id: openRound.id,
@@ -197,6 +266,13 @@ export class GroupsService {
           selectionMethod: openRound.selectionMethod,
           collectorPositionId: openRound.collectorPositionId,
           collectorName: openRound.collectorPosition?.member?.fullName ?? null,
+          collectorRotationOrder:
+            openRound.collectorPosition?.rotationOrder ?? null,
+          targetAmount: group.positions.length * group.amount,
+          collectedAmount: openRound.payments.reduce(
+            (sum, p) => sum + p.amount,
+            0,
+          ),
           paidCount: openRound._count.payments,
           payments: openRound.payments.map((p) => ({
             id: p.id,
@@ -221,14 +297,10 @@ export class GroupsService {
       shareCode: group.shareCode,
       createdAt: group.createdAt,
       fundBalance,
+      totalMembers: group.members.length,
+      totalPositions: group.positions.length,
       members: group.members,
-      positions: group.positions.map((p) => ({
-        id: p.id,
-        memberId: p.memberId,
-        memberName: p.member.fullName,
-        rotationOrder: p.rotationOrder,
-        isActive: p.isActive,
-      })),
+      positions: enrichedPositions,
       activeCycle: activeCycle
         ? {
             id: activeCycle.id,
