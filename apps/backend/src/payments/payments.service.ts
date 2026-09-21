@@ -1,8 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -75,11 +75,17 @@ export class PaymentsService {
       );
     }
 
+    const today = new Date().toISOString().slice(0, 10);
+    const dueDate = round.dueDate.toISOString().slice(0, 10);
+
+    const isLate = today > dueDate;
+
     return this.prisma.payment.create({
       data: {
         roundId,
         positionId: position.id,
         amount,
+        isLate,
       },
     });
   }
@@ -157,10 +163,16 @@ export class PaymentsService {
         (position) => !paidPositionIds.has(position.id),
       );
 
+      const today = new Date().toISOString().slice(0, 10);
+      const dueDate = round.dueDate.toISOString().slice(0, 10);
+
+      const isLate = today > dueDate;
+
       const payments = unpaidPositions.map((position) => ({
         roundId,
         positionId: position.id,
         amount: round.cycle.group.amount,
+        isLate,
       }));
 
       if (payments.length === 0) {

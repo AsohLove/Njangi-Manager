@@ -11,6 +11,13 @@ import { MembersModule } from './members/members.module';
 import { PositionsModule } from './positions/positions.module';
 import { CyclesModule } from './cycles/cycles.module';
 import { FinesModule } from './fines/fines.module';
+import { FundModule } from './fund/fund.module';
+import { AdjustmentsService } from './adjustments/adjustments.service';
+import { AdjustmentsController } from './adjustments/adjustments.controller';
+import { AdjustmentsModule } from './adjustments/adjustments.module';
+import { LedgerModule } from './ledger/ledger.module';
+import { MemberSummaryModule } from './member-summary/member-summary.module';
+import { ShareModule } from './share/share.module';
 
 @Module({
   imports: [
@@ -27,8 +34,13 @@ import { FinesModule } from './fines/fines.module';
     PositionsModule,
     CyclesModule,
     FinesModule,
+    FundModule,
+    AdjustmentsModule,
+    LedgerModule,
+    MemberSummaryModule,
+    ShareModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, AdjustmentsController],
+  providers: [AppService, AdjustmentsService],
 })
 export class AppModule {}
