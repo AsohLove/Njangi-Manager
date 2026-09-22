@@ -3,7 +3,6 @@
 import Link from "next/link"; 
 import { Plus } from "lucide-react";
 
-import { SkeletonLoader } from "@/components/ui/Loader";
 import { useGroups } from "@/hooks/useCollection";
 import { GroupCard } from "@/components/ui/GroupCard";
 import { Card } from "@/components/ui/Card";

@@ -27,8 +27,99 @@ export type GroupProps = {
   orderMode: string;
   shareCode: string;
   createdAt: string;
-  // Optional parameters if present in your API response
-  status?: string;
-  totalPositions?: number;
-  collectedPositions?: number;
+  currentRoundNumber: number;
+  collectorName: string;
+  collectorPositionId: number;
+  paidCount: number;
+  totalMembers: number;
+};
+
+
+export type SelectionMethod = 'auto' | 'app_draw' | 'manual_draw';
+export type CycleStatus = 'active' | 'complete';
+export type PayoutStatus = 'COLLECTED' | 'THIS ROUND' | null;
+export type PaymentStatus = 'PAID' | 'PARTLY' | 'WAITING';
+
+export interface Member {
+  id: number;
+  groupId: number;
+  fullName: string;
+  phone: string | null;
+}
+
+export interface Position {
+  id: number;
+  memberId: number;
+  memberName: string;
+  rotationOrder: number | null;
+  isActive: boolean;
+  positionLabel: string | null; // e.g., "position 1 of 2"
+  payoutStatus: PayoutStatus;   // "COLLECTED" | "THIS ROUND" | null
+  paymentStatus: PaymentStatus; // "PAID" | "PARTLY" | "WAITING"
+  amountPaid: number;
+  isLate: boolean;
+}
+
+export interface ActiveCycle {
+  id: number;
+  number: number;
+  status: CycleStatus;
+  startedAt: string;
+}
+
+export interface RoundPayment {
+  id: number;
+  positionId: number;
+  memberName: string | null;
+  amount: number;
+  isLate: boolean;
+  paidAt: string;
+}
+
+export interface Payout {
+  id: number;
+  roundId: number;
+  positionId: number;
+  amount: number;
+  shortfall: number;
+  paidAt: string;
+}
+
+export interface OpenRoundSummary {
+  id: number;
+  number: number;
+  dueDate: string;
+  selectionMethod: SelectionMethod;
+  collectorPositionId: number;
+  collectorName: string | null;
+  collectorRotationOrder: number | null;
+  targetAmount: number;
+  collectedAmount: number;
+  paidCount: number;
+  payments: RoundPayment[];
+  payout: Payout | null;
+}
+
+export interface GroupDetailResponse {
+  id: number;
+  ownerId: number;
+  name: string;
+  amount: number;
+  frequency: string;
+  startDate: string;
+  orderMode: string;
+  shareCode: string;
+  createdAt: string;
+  fundBalance: number;
+  totalMembers: number;
+  totalPositions: number;
+  members: Member[];
+  positions: Position[];
+  activeCycle: ActiveCycle | null;
+  openRound: OpenRoundSummary | null;
+}
+
+export interface Payment {
+  position_id: number;
+  amount?: number;
 }
