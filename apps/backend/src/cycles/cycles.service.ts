@@ -48,7 +48,6 @@ export class CyclesService {
       }
     }
 
-    // oga love this is to calculate the cycle number
     const maxCycleNumber = group.cycles.reduce(
       (max, c) => (c.number > max ? c.number : max),
       0,
