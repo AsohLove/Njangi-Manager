@@ -223,13 +223,13 @@ export default function MemberPage() {
                       )}
                     </div>
 
-                    {hasCollected && (
+                    {position.payoutStatus === "COLLECTED" && (
                       <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">
                         COLLECTED
                       </span>
                     )}
 
-                    {isCollectingThisRound && (
+                    {position.payoutStatus === "THIS ROUND" && (
                       <span className="rounded-full bg-emerald-800 px-2 py-1 text-xs font-semibold text-white">
                         THIS ROUND
                       </span>
