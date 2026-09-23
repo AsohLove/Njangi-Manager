@@ -129,8 +129,8 @@ export async function createMember(groupId: number, payload: { full_name: string
   return response.data;
 }
 
-export async function deleteMember(groupId: number, memberId: number) {
-  const response = await apiClient.delete(`/groups/${groupId}/members/${memberId}`);
+export async function deleteMember(memberId: number) {
+  const response = await apiClient.delete(`/members/${memberId}`);
   return response.data;
 }
 
