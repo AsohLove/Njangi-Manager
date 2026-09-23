@@ -11,7 +11,7 @@ import {
   getGroupbyId,
   updatePositionsOrder,
 } from "@/lib/api-client";
-import type { GroupMemberProps, PositionProps } from "@/types/entities";
+import type { Member, Position } from "@/types/entities";
 import { useState } from "react";
 
 function shuffle<T>(items: T[]) {
@@ -122,8 +122,8 @@ export default function MemberPage() {
     );
   }
 
-  const members: GroupMemberProps[] = group.members ?? [];
-  const positions: PositionProps[] = group.positions ?? [];
+  const members: Member[] = group.members ?? [];
+  const positions: Position[] = group.positions ?? [];
   const collectedIds: number[] = group.collectedPositionIds ?? [];
 
   const cycleStarted = Boolean(group.activeCycle);
