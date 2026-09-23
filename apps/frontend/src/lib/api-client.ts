@@ -169,3 +169,19 @@ export async function getSharebyCode(code:string) {
  const response = await apiClient.get(`/share/${code}`)
  return response.data;
 }
+
+export async function getGroupFund(groupId: number) {
+  const response = await apiClient.get(`/groups/${groupId}/fund`);
+  return response.data;
+}
+
+export async function createFundSpending(
+  groupId: number,
+  payload: {
+    amount: number;
+    note: string;
+  },
+) {
+  const response = await apiClient.post(`/groups/${groupId}/fund/spending`, payload);
+  return response.data;
+}
