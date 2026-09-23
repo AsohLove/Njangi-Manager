@@ -1,8 +1,8 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getGroups, getGroupbyId, createGroup } from "@/lib/api-client";
-import { groupDto } from "@/types/entities";
+import { useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import { getGroups, getGroupbyId, createGroup, createPayment} from "@/lib/api-client";
+import { groupDto, Payment } from "@/types/entities";
 
 export function useGroups() {
   return useQuery({ queryKey: ["groups"], queryFn: getGroups });
@@ -23,6 +23,28 @@ export function useCreateGroup() {
     mutationFn: (payload: groupDto | FormData) => createGroup(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] });
+    },
+  });
+}
+
+export function useCreatePayment(groupId?: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      roundId,
+      payload,
+    }: {
+      roundId: number;
+      payload: Payment | FormData;
+    }) => createPayment({ roundId, payload }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      if (groupId) {
+        queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["group"] });
+      }
     },
   });
 }

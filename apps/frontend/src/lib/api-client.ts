@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import type { registerDto, loginDto, groupDto } from "@/types/entities";
+import type { registerDto, loginDto, groupDto, Payment } from "@/types/entities";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -106,6 +106,18 @@ export async function createGroup(payload: groupDto | FormData) {
   const body = payload instanceof FormData ? payload : payload;
 
   const response = await apiClient.post("/groups", body);
+  return response.data;
+}
+
+export async function createPayment({
+  roundId,
+  payload,
+}: {
+  roundId: number;
+  payload: Payment | FormData;
+}) {
+  const body = payload instanceof FormData ? payload : payload;
+  const response = await apiClient.post(`/rounds/${roundId}/payments`, body);
   return response.data;
 }
 
