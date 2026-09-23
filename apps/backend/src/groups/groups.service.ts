@@ -105,12 +105,179 @@ export class GroupsService {
 
   async findOne(id: number, ownerId: number) {
     const group = await this.prisma.group.findFirst({
-      where: { id, ownerId },
+      where: {
+        id,
+        ownerId,
+      },
+      include: {
+        members: true,
+
+        positions: {
+          include: { member: true },
+        },
+
+        cycles: {
+          where: {
+            status: 'active',
+          },
+          take: 1,
+          include: {
+            rounds: {
+              orderBy: {
+                number: 'asc',
+              },
+              include: {
+                payments: true,
+                collectorPosition: {
+                  include: {
+                    member: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+
+        fines: {
+          where: {
+            status: 'paid',
+          },
+        },
+
+        fundSpendings: true,
+
+        adjustments: {
+          where: {
+            affectsFund: true,
+          },
+        },
+      },
     });
+
     if (!group) {
       throw new NotFoundException('Group not found');
     }
-    return group;
+
+    const activePositions = group.positions.filter(
+      (position) => position.isActive,
+    );
+
+    const activeCycle = group.cycles[0] ?? null;
+    const allRounds = activeCycle?.rounds ?? [];
+    const openRound =
+      allRounds.find((round) => round.status === 'open') ?? null;
+
+    const collectedPositionIds = allRounds
+      .filter((round) => round.status === 'closed')
+      .map((round) => round.collectorPositionId);
+
+    const expectedPot = openRound ? group.amount * activePositions.length : 0;
+
+    const collected = openRound
+      ? openRound.payments.reduce((total, payment) => total + payment.amount, 0)
+      : 0;
+
+    const remaining = expectedPot - collected;
+
+    const paidFines = group.fines.reduce(
+      (total, fine) => total + fine.amount,
+      0,
+    );
+
+    const fundSpending = group.fundSpendings.reduce(
+      (total, spending) => total + spending.amount,
+      0,
+    );
+
+    const fundAdjustments = group.adjustments.reduce(
+      (total, adjustment) => total + adjustment.amount,
+      0,
+    );
+
+    const fundBalance = paidFines + fundAdjustments - fundSpending;
+
+    const paymentsByPositionId = new Map(
+      (openRound?.payments ?? []).map((payment) => [
+        payment.positionId,
+        payment,
+      ]),
+    );
+
+    const now = new Date();
+    const dueDateEndOfDay = new Date(openRound?.dueDate ?? 0);
+    dueDateEndOfDay.setHours(23, 59, 59, 999);
+    const isPastDue = openRound ? now > dueDateEndOfDay : false;
+
+    const positionsStatus = openRound
+      ? activePositions.map((position) => {
+          const payment = paymentsByPositionId.get(position.id);
+
+          let status: 'paid' | 'partial' | 'waiting';
+          if (!payment) {
+            status = 'waiting';
+          } else if (payment.amount >= group.amount) {
+            status = 'paid';
+          } else {
+            status = 'partial';
+          }
+
+          const isLate = payment
+            ? payment.isLate
+            : isPastDue && status !== 'paid';
+
+          return {
+            positionId: position.id,
+            memberId: position.member.id,
+            memberName: position.member.fullName,
+            status,
+            amountPaid: payment?.amount ?? 0,
+            isLate,
+          };
+        })
+      : [];
+
+    return {
+      id: group.id,
+      name: group.name,
+      amount: group.amount,
+      frequency: group.frequency,
+      startDate: group.startDate,
+      orderMode: group.orderMode,
+
+      members: group.members,
+      positions: group.positions,
+
+      activeCycle,
+      collectedPositionIds,
+
+      openRound: openRound
+        ? {
+            id: openRound.id,
+            number: openRound.number,
+            collectorPositionId: openRound.collectorPositionId,
+
+            collector: openRound.collectorPosition
+              ? {
+                  positionId: openRound.collectorPosition.id,
+                  memberId: openRound.collectorPosition.member.id,
+                  fullName: openRound.collectorPosition.member.fullName,
+                }
+              : null,
+
+            selectionMethod: openRound.selectionMethod,
+            dueDate: openRound.dueDate,
+            status: openRound.status,
+            expectedPot,
+            collected,
+            remaining,
+            positions: positionsStatus,
+          }
+        : null,
+
+      fund: {
+        balance: fundBalance,
+      },
+    };
   }
 
   async regenerateShareCode(id: number, ownerId: number) {

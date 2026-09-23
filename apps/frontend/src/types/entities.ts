@@ -32,3 +32,23 @@ export type GroupProps = {
   totalPositions?: number;
   collectedPositions?: number;
 }
+
+export type MemberProps = {
+  id: number;
+  groupId: number;
+  userId: number;
+  fullName: string;
+  phone?: string | null;
+}
+
+export type PositionProps = {
+  id: number;
+  groupId: number;
+  memberId: number;
+  rotationOrder: number | null;
+  isActive: boolean;
+}
+
+export type GroupMemberProps = MemberProps & {
+  position: PositionProps[];
+}
