@@ -130,3 +130,37 @@ export function getStoredUser() {
     return null;
   }
 }
+
+export async function getGroupMembers(groupId: number) {
+  const response = await apiClient.get(`/groups/${groupId}/members`);
+  return response.data;
+}
+
+export async function createMember(groupId: number, payload: { full_name: string; phone?: string }) {
+  const response = await apiClient.post(`/groups/${groupId}/members`, payload);
+  return response.data;
+}
+
+export async function deleteMember(memberId: number) {
+  const response = await apiClient.delete(`/members/${memberId}`);
+  return response.data;
+}
+
+export async function createPosition(groupId: number, memberId: number) {
+  const response = await apiClient.post(`/groups/${groupId}/positions`, { member_id: memberId });
+  return response.data;
+}
+
+export async function deletePosition(positionId: number) {
+  const response = await apiClient.delete(`/positions/${positionId}`);
+  return response.data;
+}
+
+export async function updatePositionsOrder(
+  groupId: number,
+  positionIds: number[],
+) {
+  await apiClient.put(`/groups/${groupId}/positions/order`, {
+    position_ids: positionIds,
+  });
+}
