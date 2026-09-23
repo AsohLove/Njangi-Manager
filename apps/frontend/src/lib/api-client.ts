@@ -164,3 +164,8 @@ export async function updatePositionsOrder(
     position_ids: positionIds,
   });
 }
+
+export async function getSharebyCode(code:string) {
+ const response = await apiClient.get(`/share/${code}`)
+ return response.data;
+}

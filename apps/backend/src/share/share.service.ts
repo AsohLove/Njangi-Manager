@@ -7,9 +7,7 @@ export class ShareService {
 
   async getShare(code: string) {
     const group = await this.prisma.group.findUnique({
-      where: {
-        shareCode: code,
-      },
+      where: { shareCode: code },
       include: {
         members: {
           select: {
@@ -17,14 +15,9 @@ export class ShareService {
             fullName: true,
           },
         },
-
         positions: {
-          where: {
-            isActive: true,
-          },
-          orderBy: {
-            rotationOrder: 'asc',
-          },
+          where: { isActive: true },
+          orderBy: { rotationOrder: 'asc' },
           include: {
             member: {
               select: {
@@ -34,20 +27,11 @@ export class ShareService {
             },
           },
         },
-
         cycles: {
-          where: {
-            status: 'active',
-          },
+          where: { status: 'active' },
+          take: 1,
           include: {
             rounds: {
-              where: {
-                status: 'open',
-              },
-              orderBy: {
-                number: 'desc',
-              },
-              take: 1,
               include: {
                 collectorPosition: {
                   include: {
@@ -61,12 +45,14 @@ export class ShareService {
                 },
                 payments: true,
               },
+              orderBy: { number: 'asc' },
             },
           },
         },
-
         fines: {
+          where: { status: 'owed' },
           include: {
+            rule: true,
             member: {
               select: {
                 id: true,
@@ -82,115 +68,134 @@ export class ShareService {
       throw new NotFoundException('Share page not found');
     }
 
-    const currentRound = group.cycles[0]?.rounds[0] ?? null;
+    // 1. Extract Active Cycle & Current Open Round
+    const activeCycle = group.cycles[0] || null;
+    const allRoundsInCycle = activeCycle?.rounds || [];
+    const currentRound =
+      allRoundsInCycle.find((r) => r.status === 'open') || null;
 
+    // 2. Fund Balance Aggregations
     const [paidFines, fundAdjustments, spending] = await Promise.all([
       this.prisma.fine.aggregate({
-        where: {
-          groupId: group.id,
-          status: 'paid',
-        },
-        _sum: {
-          amount: true,
-        },
+        where: { groupId: group.id, status: 'paid' },
+        _sum: { amount: true },
       }),
-
       this.prisma.adjustment.aggregate({
-        where: {
-          groupId: group.id,
-          affectsFund: true,
-        },
-        _sum: {
-          amount: true,
-        },
+        where: { groupId: group.id, affectsFund: true },
+        _sum: { amount: true },
       }),
-
       this.prisma.fundSpending.aggregate({
-        where: {
-          groupId: group.id,
-        },
-        _sum: {
-          amount: true,
-        },
+        where: { groupId: group.id },
+        _sum: { amount: true },
       }),
     ]);
 
-    const paidFinesTotal = paidFines._sum.amount ?? 0;
-    const adjustmentsTotal = fundAdjustments._sum.amount ?? 0;
-    const spendingTotal = spending._sum.amount ?? 0;
+    const fundBalance =
+      (paidFines._sum.amount ?? 0) +
+      (fundAdjustments._sum.amount ?? 0) -
+      (spending._sum.amount ?? 0);
 
-    const fundBalance = paidFinesTotal + adjustmentsTotal - spendingTotal;
-
-    const positions = group.positions.map((position) => {
-      const payment = currentRound?.payments.find(
-        (payment) => payment.positionId === position.id,
+    // 3. Multi-position Label Logic ("position 1 of 2")
+    const memberTotalPositions = new Map<number, number>();
+    group.positions.forEach((p) => {
+      memberTotalPositions.set(
+        p.memberId,
+        (memberTotalPositions.get(p.memberId) || 0) + 1,
       );
+    });
+
+    const memberCurrentIndex = new Map<number, number>();
+
+    // 4. Map Enriched Positions
+    const positions = group.positions.map((position) => {
+      // Determine slot label
+      const totalSlots = memberTotalPositions.get(position.memberId) || 1;
+      let positionLabel: string | null = null;
+
+      if (totalSlots > 1) {
+        const idx = (memberCurrentIndex.get(position.memberId) || 0) + 1;
+        memberCurrentIndex.set(position.memberId, idx);
+        positionLabel = `position ${idx} of ${totalSlots}`;
+      }
+
+      // Determine payment status in current open round
+      const payment = currentRound?.payments.find(
+        (p) => p.positionId === position.id,
+      );
+
+      let roundStatus: 'paid' | 'partly' | 'waiting' | 'no_open_round' =
+        'no_open_round';
+      let paidAmount = 0;
+
+      if (currentRound) {
+        if (payment) {
+          paidAmount = payment.amount;
+          if (payment.amount >= group.amount) {
+            roundStatus = 'paid';
+          } else if (payment.amount > 0) {
+            roundStatus = 'partly';
+          }
+        } else {
+          roundStatus = 'waiting';
+        }
+      }
 
       return {
         position_id: position.id,
+        rotation_order: position.rotationOrder,
         member_id: position.memberId,
         member_name: position.member.fullName,
-        round_status: currentRound
-          ? payment
-            ? 'paid'
-            : 'waiting'
-          : 'no_open_round',
-        paid_amount: payment?.amount ?? 0,
+        position_label: positionLabel,
+        round_status: roundStatus,
+        paid_amount: paidAmount,
+        is_late: payment?.isLate ?? false,
       };
     });
 
-    const fineStatus = group.members.reduce(
-      (result, member) => {
-        result[member.id] = {
-          member_id: member.id,
-          member_name: member.fullName,
-          owed: 0,
-          paid: 0,
-        };
+    // 5. Calculate Collector Amounts
+    const totalPositionsCount = group.positions.length;
+    const targetAmount = totalPositionsCount * group.amount;
+    const collectedAmount = currentRound
+      ? currentRound.payments.reduce((sum, p) => sum + p.amount, 0)
+      : 0;
 
-        return result;
-      },
-      {} as Record<
-        number,
-        {
-          member_id: number;
-          member_name: string;
-          owed: number;
-          paid: number;
-        }
-      >,
-    );
-
-    for (const fine of group.fines) {
-      if (fine.status === 'paid') {
-        fineStatus[fine.memberId].paid += fine.amount;
-      } else {
-        fineStatus[fine.memberId].owed += fine.amount;
-      }
-    }
+    // 6. Map Fines list
+    const finesList = group.fines.map((fine) => ({
+      id: fine.id,
+      member_id: fine.memberId,
+      member_name: fine.member.fullName,
+      rule_name: fine.rule?.name ?? fine.note ?? 'Fine',
+      amount: fine.amount,
+      status: 'OWED',
+    }));
 
     return {
       name: group.name,
       amount: group.amount,
       frequency: group.frequency,
+      total_rounds: totalPositionsCount,
+      fund_balance: fundBalance,
+      fund_source_note: 'From paid fines',
 
       current_round: currentRound
         ? {
             id: currentRound.id,
             number: currentRound.number,
             status: currentRound.status,
+            due_date: currentRound.dueDate,
             collector: {
               position_id: currentRound.collectorPositionId,
               member_id: currentRound.collectorPosition.memberId,
               member_name: currentRound.collectorPosition.member.fullName,
+              rotation_order: currentRound.collectorPosition.rotationOrder,
+              target_amount: targetAmount,
+              collected_amount: collectedAmount,
             },
             positions,
           }
         : null,
 
-      fund_balance: fundBalance,
-
-      fines: Object.values(fineStatus),
+      fines: finesList,
     };
   }
 }

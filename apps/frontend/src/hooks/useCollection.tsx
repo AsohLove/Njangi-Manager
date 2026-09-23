@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import { getGroups, getGroupbyId, createGroup, createPayment} from "@/lib/api-client";
+import { getGroups, getGroupbyId, createGroup,getSharebyCode, createPayment} from "@/lib/api-client";
 import { groupDto, Payment } from "@/types/entities";
 
 export function useGroups() {
@@ -14,6 +14,14 @@ export function useGroup(id: number) {
     queryFn: () => getGroupbyId(id),
     enabled: !!id,
   });
+}
+
+export function useShare(code: string) {
+  return useQuery({
+    queryKey: ["share", code],
+    queryFn: () => getSharebyCode(code),
+    enabled: !!code,
+  })
 }
 
 export function useCreateGroup() {

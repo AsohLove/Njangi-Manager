@@ -54,7 +54,7 @@ export default function GroupPage() {
       : 0;
 
   const handleShare = () => {
-    const shareUrl = `${window.location.origin}/groups/${group.id}`;
+    const shareUrl = `${window.location.origin}/members/${group.shareCode}`;
     if (navigator.share) {
       navigator.share({
         title: group.name,

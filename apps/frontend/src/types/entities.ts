@@ -1,21 +1,21 @@
 export type registerDto = {
-  email: string,
-  password: string,
-  full_name: string,
-}
+  email: string;
+  password: string;
+  full_name: string;
+};
 
 export type loginDto = {
-  email: string,
-  password: string
-}
+  email: string;
+  password: string;
+};
 
 export type groupDto = {
-  name: string,
-  amount: number,
-  frequency: string,
-  start_date: string,
-  order_mode: "fixed" | "ballot"
-}
+  name: string;
+  amount: number;
+  frequency: string;
+  start_date: string;
+  order_mode: "fixed" | "ballot";
+};
 
 export type GroupProps = {
   id: number;
@@ -34,11 +34,10 @@ export type GroupProps = {
   totalMembers: number;
 };
 
-
-export type SelectionMethod = 'auto' | 'app_draw' | 'manual_draw';
-export type CycleStatus = 'active' | 'complete';
-export type PayoutStatus = 'COLLECTED' | 'THIS ROUND' | null;
-export type PaymentStatus = 'PAID' | 'PARTLY' | 'WAITING';
+export type SelectionMethod = "auto" | "app_draw" | "manual_draw";
+export type CycleStatus = "active" | "complete";
+export type PayoutStatus = "COLLECTED" | "THIS ROUND" | null;
+export type PaymentStatus = "PAID" | "PARTLY" | "WAITING";
 
 export interface Member {
   id: number;
@@ -54,7 +53,7 @@ export interface Position {
   rotationOrder: number | null;
   isActive: boolean;
   positionLabel: string | null; // e.g., "position 1 of 2"
-  payoutStatus: PayoutStatus;   // "COLLECTED" | "THIS ROUND" | null
+  payoutStatus: PayoutStatus; // "COLLECTED" | "THIS ROUND" | null
   paymentStatus: PaymentStatus; // "PAID" | "PARTLY" | "WAITING"
   amountPaid: number;
   isLate: boolean;
@@ -122,4 +121,54 @@ export interface GroupDetailResponse {
 export interface Payment {
   position_id: number;
   amount?: number;
+}
+
+export interface ShareCollector {
+  position_id: number;
+  member_id: number;
+  member_name: string;
+  rotation_order: number;
+  target_amount: number;
+  collected_amount: number;
+}
+export type ShareRoundStatus = 'paid' | 'partly' | 'waiting' | 'no_open_round';
+
+export interface SharePosition {
+  position_id: number;
+  rotation_order: number;
+  member_id: number;
+  member_name: string;
+  position_label: string | null;
+  round_status: ShareRoundStatus;
+  paid_amount: number;
+  is_late: boolean;
+}
+
+export interface ShareCurrentRound {
+  id: number;
+  number: number;
+  status: string;
+  due_date: string;
+  collector: ShareCollector;
+  positions: SharePosition[];
+}
+
+export interface ShareFine {
+  id: number;
+  member_id: number;
+  member_name: string;
+  rule_name: string;
+  amount: number;
+  status: string;
+}
+
+export interface ShareGroupResponse {
+  name: string;
+  amount: number;
+  frequency: string;
+  total_rounds: number;
+  fund_balance: number;
+  fund_source_note: string;
+  current_round: ShareCurrentRound | null;
+  fines: ShareFine[];
 }
