@@ -105,51 +105,64 @@ export class GroupsService {
 
   async findOne(id: number, ownerId: number) {
     const group = await this.prisma.group.findFirst({
-      where: {
-        id,
-        ownerId,
-      },
+      where: { id, ownerId },
       include: {
-        members: true,
-
-        positions: {
-          include: { member: true },
+        members: {
+          orderBy: { fullName: 'asc' },
         },
-
-        cycles: {
-          where: {
-            status: 'active',
+        positions: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                fullName: true,
+              },
+            },
           },
+          orderBy: { rotationOrder: 'asc' },
+        },
+        cycles: {
+          where: { status: 'active' },
           take: 1,
           include: {
             rounds: {
-              orderBy: {
-                number: 'asc',
-              },
               include: {
-                payments: true,
                 collectorPosition: {
                   include: {
                     member: true,
                   },
                 },
+                payments: {
+                  include: {
+                    position: {
+                      include: {
+                        member: true,
+                      },
+                    },
+                  },
+                },
+                fines: true,
+                adjustments: true,
+                payout: true,
+                _count: {
+                  select: { payments: true },
+                },
               },
+              orderBy: { number: 'asc' },
             },
           },
         },
-
+        // Aggregations to compute the total Fund Balance
         fines: {
-          where: {
-            status: 'paid',
-          },
+          where: { status: 'paid' },
+          select: { amount: true },
         },
-
-        fundSpendings: true,
-
+        fundSpendings: {
+          select: { amount: true },
+        },
         adjustments: {
-          where: {
-            affectsFund: true,
-          },
+          where: { affectsFund: true },
+          select: { amount: true },
         },
       },
     });
@@ -158,125 +171,145 @@ export class GroupsService {
       throw new NotFoundException('Group not found');
     }
 
-    const activePositions = group.positions.filter(
-      (position) => position.isActive,
-    );
-
-    const activeCycle = group.cycles[0] ?? null;
-    const allRounds = activeCycle?.rounds ?? [];
-    const openRound =
-      allRounds.find((round) => round.status === 'open') ?? null;
-
-    const collectedPositionIds = allRounds
-      .filter((round) => round.status === 'closed')
-      .map((round) => round.collectorPositionId);
-
-    const expectedPot = openRound ? group.amount * activePositions.length : 0;
-
-    const collected = openRound
-      ? openRound.payments.reduce((total, payment) => total + payment.amount, 0)
-      : 0;
-
-    const remaining = expectedPot - collected;
-
-    const paidFines = group.fines.reduce(
-      (total, fine) => total + fine.amount,
+    // 1. Calculate Fund Balance:
+    //    Fund Balance = (Paid Fines + Fund Adjustments) - Fund Spendings
+    const totalFines = group.fines.reduce((sum, f) => sum + f.amount, 0);
+    const totalAdjustments = group.adjustments.reduce(
+      (sum, a) => sum + a.amount,
       0,
     );
-
-    const fundSpending = group.fundSpendings.reduce(
-      (total, spending) => total + spending.amount,
+    const totalSpendings = group.fundSpendings.reduce(
+      (sum, s) => sum + s.amount,
       0,
     );
+    const fundBalance = totalFines + totalAdjustments - totalSpendings;
 
-    const fundAdjustments = group.adjustments.reduce(
-      (total, adjustment) => total + adjustment.amount,
-      0,
+    // 2. Extract Active Cycle, All Rounds, and current Open Round
+    const activeCycle = group.cycles[0] || null;
+    const allRoundsInCycle = activeCycle?.rounds || [];
+    const openRound = allRoundsInCycle.find((r) => r.status === 'open') || null;
+
+    // 3. Collect Position IDs that received payouts in past closed rounds
+    const collectedPositionIds = new Set(
+      allRoundsInCycle
+        .filter((r) => r.status === 'closed' && r.payout !== null)
+        .map((r) => r.collectorPositionId),
     );
 
-    const fundBalance = paidFines + fundAdjustments - fundSpending;
+    // 4. Map positions per member to construct "position X of Y" labels
+    const memberTotalPositions = new Map<number, number>();
+    group.positions.forEach((p) => {
+      memberTotalPositions.set(
+        p.memberId,
+        (memberTotalPositions.get(p.memberId) || 0) + 1,
+      );
+    });
 
-    const paymentsByPositionId = new Map(
-      (openRound?.payments ?? []).map((payment) => [
-        payment.positionId,
-        payment,
-      ]),
-    );
+    const memberCurrentIndex = new Map<number, number>();
 
-    const now = new Date();
-    const dueDateEndOfDay = new Date(openRound?.dueDate ?? 0);
-    dueDateEndOfDay.setHours(23, 59, 59, 999);
-    const isPastDue = openRound ? now > dueDateEndOfDay : false;
+    // 5. Enrich positions array for UI rendering
+    const enrichedPositions = group.positions.map((p) => {
+      // Slot label (e.g., "position 1 of 2")
+      const totalSlots = memberTotalPositions.get(p.memberId) || 1;
+      let positionLabel: string | null = null;
 
-    const positionsStatus = openRound
-      ? activePositions.map((position) => {
-          const payment = paymentsByPositionId.get(position.id);
+      if (totalSlots > 1) {
+        const idx = (memberCurrentIndex.get(p.memberId) || 0) + 1;
+        memberCurrentIndex.set(p.memberId, idx);
+        positionLabel = `position ${idx} of ${totalSlots}`;
+      }
 
-          let status: 'paid' | 'partial' | 'waiting';
-          if (!payment) {
-            status = 'waiting';
-          } else if (payment.amount >= group.amount) {
-            status = 'paid';
-          } else {
-            status = 'partial';
-          }
+      // Payout Status (For Members Screen)
+      let payoutStatus: 'COLLECTED' | 'THIS ROUND' | null = null;
+      if (openRound && openRound.collectorPositionId === p.id) {
+        payoutStatus = 'THIS ROUND';
+      } else if (collectedPositionIds.has(p.id)) {
+        payoutStatus = 'COLLECTED';
+      }
 
-          const isLate = payment
-            ? payment.isLate
-            : isPastDue && status !== 'paid';
+      // Payment Status (For Round Screen)
+      const payment = openRound?.payments.find(
+        (pay) => pay.positionId === p.id,
+      );
+      let paymentStatus: 'PAID' | 'PARTLY' | 'WAITING' = 'WAITING';
+      let amountPaid = 0;
 
-          return {
-            positionId: position.id,
-            memberId: position.member.id,
-            memberName: position.member.fullName,
-            status,
-            amountPaid: payment?.amount ?? 0,
-            isLate,
-          };
-        })
-      : [];
+      if (payment) {
+        amountPaid = payment.amount;
+        if (payment.amount >= group.amount) {
+          paymentStatus = 'PAID';
+        } else if (payment.amount > 0) {
+          paymentStatus = 'PARTLY';
+        }
+      }
+
+      return {
+        id: p.id,
+        memberId: p.memberId,
+        memberName: p.member.fullName,
+        rotationOrder: p.rotationOrder,
+        isActive: p.isActive,
+        positionLabel,
+        payoutStatus,
+        paymentStatus,
+        amountPaid,
+        isLate: payment?.isLate ?? false,
+      };
+    });
+
+    // 6. Format Open Round Summary
+    const openRoundSummary = openRound
+      ? {
+          id: openRound.id,
+          number: openRound.number,
+          dueDate: openRound.dueDate,
+          selectionMethod: openRound.selectionMethod,
+          collectorPositionId: openRound.collectorPositionId,
+          collectorName: openRound.collectorPosition?.member?.fullName ?? null,
+          collectorRotationOrder:
+            openRound.collectorPosition?.rotationOrder ?? null,
+          targetAmount: group.positions.length * group.amount,
+          collectedAmount: openRound.payments.reduce(
+            (sum, p) => sum + p.amount,
+            0,
+          ),
+          paidCount: openRound._count.payments,
+          payments: openRound.payments.map((p) => ({
+            id: p.id,
+            positionId: p.positionId,
+            memberName: p.position?.member?.fullName ?? null,
+            amount: p.amount,
+            isLate: p.isLate,
+            paidAt: p.paidAt,
+          })),
+          payout: openRound.payout ?? null,
+        }
+      : null;
 
     return {
       id: group.id,
+      ownerId: group.ownerId,
       name: group.name,
       amount: group.amount,
       frequency: group.frequency,
       startDate: group.startDate,
       orderMode: group.orderMode,
-
+      shareCode: group.shareCode,
+      createdAt: group.createdAt,
+      fundBalance,
+      totalMembers: group.members.length,
+      totalPositions: group.positions.length,
       members: group.members,
-      positions: group.positions,
-
-      activeCycle,
-      collectedPositionIds,
-
-      openRound: openRound
+      positions: enrichedPositions,
+      activeCycle: activeCycle
         ? {
-            id: openRound.id,
-            number: openRound.number,
-            collectorPositionId: openRound.collectorPositionId,
-
-            collector: openRound.collectorPosition
-              ? {
-                  positionId: openRound.collectorPosition.id,
-                  memberId: openRound.collectorPosition.member.id,
-                  fullName: openRound.collectorPosition.member.fullName,
-                }
-              : null,
-
-            selectionMethod: openRound.selectionMethod,
-            dueDate: openRound.dueDate,
-            status: openRound.status,
-            expectedPot,
-            collected,
-            remaining,
-            positions: positionsStatus,
+            id: activeCycle.id,
+            number: activeCycle.number,
+            status: activeCycle.status,
+            startedAt: activeCycle.startedAt,
           }
         : null,
-
-      fund: {
-        balance: fundBalance,
-      },
+      openRound: openRoundSummary,
     };
   }
 

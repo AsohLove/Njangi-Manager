@@ -12,8 +12,6 @@ import { PositionsModule } from './positions/positions.module';
 import { CyclesModule } from './cycles/cycles.module';
 import { FinesModule } from './fines/fines.module';
 import { FundModule } from './fund/fund.module';
-import { AdjustmentsService } from './adjustments/adjustments.service';
-import { AdjustmentsController } from './adjustments/adjustments.controller';
 import { AdjustmentsModule } from './adjustments/adjustments.module';
 import { LedgerModule } from './ledger/ledger.module';
 import { MemberSummaryModule } from './member-summary/member-summary.module';
@@ -40,7 +38,7 @@ import { ShareModule } from './share/share.module';
     MemberSummaryModule,
     ShareModule,
   ],
-  controllers: [AppController, AdjustmentsController],
-  providers: [AppService, AdjustmentsService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
