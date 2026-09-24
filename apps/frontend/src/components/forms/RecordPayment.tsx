@@ -9,8 +9,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useCreatePayment } from "@/hooks/useCollection";
-import { Payment } from "@/types/entities";
+import { useCreatePayment, useUpdatePayment } from "@/hooks/useCollection";
 
 interface RecordPaymentDrawerProps {
   groupId: number;
@@ -20,6 +19,8 @@ interface RecordPaymentDrawerProps {
   positionNumber: number;
   memberName: string;
   defaultAmount: number;
+  paymentId?: number;
+  currentAmount?: number;
 }
 
 export function RecordPaymentDrawer({
@@ -30,11 +31,20 @@ export function RecordPaymentDrawer({
   positionNumber,
   memberName,
   defaultAmount,
+  paymentId,
+  currentAmount = 0,
 }: RecordPaymentDrawerProps) {
   const [open, setOpen] = React.useState(false);
-  const [amount, setAmount] = React.useState<number | string>(defaultAmount);
+  const [amount, setAmount] = React.useState<number | string>(
+    paymentId !== undefined ? defaultAmount - currentAmount : defaultAmount,
+  );
 
   const { mutate: recordPayment, isPending } = useCreatePayment(groupId);
+  const { mutate: updatePayment, isPending: isUpdating } = useUpdatePayment(
+    groupId,
+  );
+  const isUpdate = paymentId !== undefined;
+  const isPendingRequest = isPending || isUpdating;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,19 +54,22 @@ export function RecordPaymentDrawer({
       return;
     }
 
+    const onSuccess = () => setOpen(false);
+
+    if (isUpdate) {
+      updatePayment(
+        { paymentId, payload: { amount: numericAmount } },
+        { onSuccess },
+      );
+      return;
+    }
+
     recordPayment(
       {
         roundId,
-        payload: {
-          position_id: positionId,
-          amount: numericAmount,
-        } as Payment,
+        payload: { position_id: positionId, amount: numericAmount },
       },
-      {
-        onSuccess: () => {
-          setOpen(false);
-        },
-      },
+      { onSuccess },
     );
   };
 
@@ -73,7 +86,7 @@ export function RecordPaymentDrawer({
         <div className="w-full p-4 space-y-4">
           <DrawerHeader className="p-0 text-left space-y-1">
             <DrawerTitle className="text-lg font-bold text-slate-900">
-              Record payment · {memberName}
+              {isUpdate ? "Update payment" : "Record payment"} · {memberName}
             </DrawerTitle>
             <p className="text-xs font-medium text-slate-500">
               Position {positionNumber} · Round {roundNumber}
@@ -86,7 +99,7 @@ export function RecordPaymentDrawer({
                 htmlFor="amount"
                 className="block text-xs font-semibold text-slate-700"
               >
-                Amount (FCFA)
+                {isUpdate ? "Additional amount (FCFA)" : "Amount (FCFA)"}
               </label>
               <input
                 id="amount"
@@ -97,15 +110,26 @@ export function RecordPaymentDrawer({
                 required
                 className="w-full h-11 px-3 rounded-lg border border-slate-300 text-base focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 text-slate-900"
               />
+              {isUpdate && (
+                <p className="text-xs font-medium text-slate-500">
+                  Amount left: {(defaultAmount - currentAmount).toLocaleString()} FCFA
+                </p>
+              )}
             </div>
 
             <div className="space-y-2 pt-2">
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPendingRequest}
                 className="w-full h-12 bg-[#1b4332] hover:bg-[#143326] text-white font-semibold rounded-lg text-sm transition-colors disabled:opacity-50"
               >
-                {isPending ? "Recording..." : "Record payment"}
+                {isPendingRequest
+                  ? isUpdate
+                    ? "Updating..."
+                    : "Recording..."
+                  : isUpdate
+                    ? "Update payment"
+                    : "Record payment"}
               </button>
 
               <DrawerClose

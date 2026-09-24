@@ -19,7 +19,7 @@ export function BottomNavbar() {
   const groupId = params?.groupId || params?.id; 
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white z-50 border-t border-slate-300/90">
+    <div className="sticky bottom-0 left-0 right-0 bg-white z-50 border-t border-slate-300/90">
       <div className="flex justify-between items-center px-4 py-2">
         {navItems.map((item) => {
 

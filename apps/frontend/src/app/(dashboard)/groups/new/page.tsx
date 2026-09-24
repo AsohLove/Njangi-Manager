@@ -20,7 +20,7 @@ export default function CreateGroupPage() {
   };
 
   return (
-    <div className="space-y-4 max-w-md mx-auto ">
+    <div className="space-y-4 w-full h-screen">
       <Card>
         <h1 className="flex items-center gap-2 text-2xl font-bold leading-tight">
           <Link href="/" className="hover:opacity-80 transition-opacity">

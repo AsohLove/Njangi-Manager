@@ -51,6 +51,7 @@ export interface Position {
   memberId: number;
   memberName: string;
   rotationOrder: number | null;
+  payoutOrder: number | null;
   isActive: boolean;
   positionLabel: string | null; // e.g., "position 1 of 2"
   payoutStatus: PayoutStatus; // "COLLECTED" | "THIS ROUND" | null
@@ -99,6 +100,36 @@ export interface OpenRoundSummary {
   payout: Payout | null;
 }
 
+export interface RoundPositionStatus {
+  position_id: number;
+  member_id: number;
+  member_name: string;
+  expected: number;
+  paid: number;
+  status: "waiting" | "partly_paid" | "paid";
+  is_late: boolean;
+}
+
+export interface RoundDetails {
+  id: number;
+  cycle_id: number;
+  number: number;
+  collector_position_id: number;
+  collector: {
+    position_id: number;
+    member_id: number;
+    member_name: string;
+  };
+  selection_method: SelectionMethod;
+  due_date: string;
+  status: "open" | "closed";
+  expected_amount: number;
+  collected_amount: number;
+  positions: RoundPositionStatus[];
+  opened_at: string;
+  closed_at: string | null;
+}
+
 export interface GroupDetailResponse {
   id: number;
   ownerId: number;
@@ -121,6 +152,10 @@ export interface GroupDetailResponse {
 export interface Payment {
   position_id: number;
   amount?: number;
+}
+
+export interface UpdatePayment {
+  amount: number;
 }
 
 export interface ShareCollector {

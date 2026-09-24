@@ -32,7 +32,7 @@ export function GroupForm({ isSubmitting = false, onSubmit }: GroupFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-md w-full bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4 text-sm font-sans"
+      className="w-full bg-white border border-slate-300 m-2 rounded-2xl p-5 space-y-4 text-sm font-sans"
     >
       {/* Group Name */}
       <div className="space-y-1.5">
