@@ -270,5 +270,18 @@ export async function createFineRule(
 
 export async function deleteFineRule(ruleId: number) {
   const response = await apiClient.delete(`/fine-rules/${ruleId}`);
+export async function getGroupFund(groupId: number) {
+  const response = await apiClient.get(`/groups/${groupId}/fund`);
+  return response.data;
+}
+
+export async function createFundSpending(
+  groupId: number,
+  payload: {
+    amount: number;
+    note: string;
+  },
+) {
+  const response = await apiClient.post(`/groups/${groupId}/fund/spending`, payload);
   return response.data;
 }

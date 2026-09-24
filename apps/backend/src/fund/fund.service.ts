@@ -22,7 +22,14 @@ export class FundService {
       throw new NotFoundException('Group not found');
     }
 
-    const [paidFines, fundAdjustments, spending] = await Promise.all([
+    const [
+      paidFines,
+      fundAdjustments,
+      spending,
+      paidFineHistory,
+      adjustmentHistory,
+      spendingHistory,
+    ] = await Promise.all([
       this.prisma.fine.aggregate({
         where: {
           groupId,
@@ -51,6 +58,59 @@ export class FundService {
           amount: true,
         },
       }),
+
+      this.prisma.fine.findMany({
+        where: {
+          groupId,
+          status: 'paid',
+        },
+        include: {
+          member: {
+            select: {
+              fullName: true,
+            },
+          },
+          round: {
+            select: {
+              number: true,
+            },
+          },
+        },
+        orderBy: {
+          paidAt: 'desc',
+        },
+      }),
+
+      this.prisma.adjustment.findMany({
+        where: {
+          groupId,
+          affectsFund: true,
+        },
+        include: {
+          member: {
+            select: {
+              fullName: true,
+            },
+          },
+          round: {
+            select: {
+              number: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+
+      this.prisma.fundSpending.findMany({
+        where: {
+          groupId,
+        },
+        orderBy: {
+          spentAt: 'desc',
+        },
+      }),
     ]);
 
     const finesTotal = paidFines._sum.amount ?? 0;
@@ -59,11 +119,48 @@ export class FundService {
 
     const balance = finesTotal + adjustmentsTotal - spendingTotal;
 
+    const history = [
+      ...paidFineHistory.map((fine) => ({
+        type: 'fine' as const,
+        id: fine.id,
+        amount: fine.amount,
+        memberName: fine.member.fullName,
+        roundNumber: fine.round?.number ?? null,
+        note: fine.note,
+        createdAt: fine.paidAt,
+      })),
+
+      ...adjustmentHistory.map((adjustment) => ({
+        type: 'adjustment' as const,
+        id: adjustment.id,
+        amount: adjustment.amount,
+        memberName: adjustment.member?.fullName ?? null,
+        roundNumber: adjustment.round?.number ?? null,
+        note: adjustment.note,
+        createdAt: adjustment.createdAt,
+      })),
+
+      ...spendingHistory.map((item) => ({
+        type: 'spending' as const,
+        id: item.id,
+        amount: item.amount,
+        memberName: null,
+        roundNumber: null,
+        note: item.note,
+        createdAt: item.spentAt,
+      })),
+    ].sort(
+      (a, b) =>
+        new Date(b.createdAt ?? 0).getTime() -
+        new Date(a.createdAt ?? 0).getTime(),
+    );
+
     return {
       balance,
       paid_fines: finesTotal,
       adjustments: adjustmentsTotal,
       spending: spendingTotal,
+      history,
     };
   }
 
