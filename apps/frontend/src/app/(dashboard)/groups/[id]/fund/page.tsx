@@ -2,11 +2,7 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
@@ -23,9 +19,7 @@ export default function GroupFundPage() {
 
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [actionError, setActionError] = useState<string | null>(
-    null,
-  );
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const { data: group, isLoading: groupLoading } = useQuery({
     queryKey: ["group", groupId],
@@ -75,9 +69,7 @@ export default function GroupFundPage() {
   if (groupLoading || fundLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-slate-500">
-          Loading group fund...
-        </p>
+        <p className="text-slate-500">Loading group fund...</p>
       </div>
     );
   }
@@ -85,9 +77,7 @@ export default function GroupFundPage() {
   if (!group || fundError) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-red-500">
-          Unable to load group fund.
-        </p>
+        <p className="text-red-500">Unable to load group fund.</p>
       </div>
     );
   }
@@ -95,7 +85,8 @@ export default function GroupFundPage() {
   const balance = fund?.balance ?? 0;
   const paidFines = fund?.paid_fines ?? 0;
   const adjustments = fund?.adjustments ?? 0;
-  const spending = fund?.spending ?? 0;
+  const spendingTotal = fund?.spending ?? 0;
+  const history = fund?.history ?? [];
 
   const canSubmit =
     Number(amount) > 0 &&
@@ -107,21 +98,14 @@ export default function GroupFundPage() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-emerald-800 px-5 py-4 text-white">
         <div className="flex items-center gap-4">
-          <Link
-            href={`/groups/${groupId}`}
-            className="text-2xl"
-          >
+          <Link href={`/groups/${groupId}`} className="text-2xl">
             ‹
           </Link>
 
           <div>
-            <h1 className="text-lg font-bold">
-              Group fund
-            </h1>
+            <h1 className="text-lg font-bold">Group fund</h1>
 
-            <p className="text-sm text-emerald-100">
-              {group.name}
-            </p>
+            <p className="text-sm text-emerald-100">{group.name}</p>
           </div>
         </div>
       </header>
@@ -129,15 +113,11 @@ export default function GroupFundPage() {
       <main className="mx-auto max-w-lg px-4 py-4 pb-24">
         {/* Fund summary */}
         <section className="rounded-lg border border-slate-200 bg-white p-5 text-center">
-          <p className="text-sm text-slate-500">
-            Fund balance
-          </p>
+          <p className="text-sm text-slate-500">Fund balance</p>
 
           <p className="mt-1 text-3xl font-bold tracking-wide text-slate-900">
             {balance.toLocaleString()}{" "}
-            <span className="text-sm font-semibold">
-              FCFA
-            </span>
+            <span className="text-sm font-semibold">FCFA</span>
           </p>
 
           <p className="mt-2 text-xs text-slate-500">
@@ -147,38 +127,77 @@ export default function GroupFundPage() {
             </span>{" "}
             · Spending{" "}
             <span className="font-medium text-slate-700">
-              {spending.toLocaleString()} FCFA
+              {spendingTotal.toLocaleString()} FCFA
             </span>
           </p>
         </section>
 
         {/* History placeholder */}
         <section className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="font-semibold text-slate-900">
-            History
-          </h2>
+          <h2 className="font-semibold text-slate-900">History</h2>
 
-          <div className="mt-3 rounded-md bg-slate-50 px-4 py-5 text-center">
-            <p className="text-sm text-slate-600">
-              Fund history will appear here.
-            </p>
+          <div className="mt-3">
+            {history.length === 0 ? (
+              <div className="rounded-md bg-slate-50 px-4 py-5 text-center">
+                <p className="text-sm text-slate-600">No fund activity yet.</p>
+              </div>
+            ) : (
+              history.map((item) => {
+                const isSpending = item.type === "spending";
+
+                const title =
+                  item.type === "fine"
+                    ? `Fine paid · ${item.memberName}`
+                    : item.type === "spending"
+                      ? "Spending"
+                      : "Adjustment";
+
+                const subtitle =
+                  item.type === "fine"
+                    ? item.roundNumber
+                      ? `Round ${item.roundNumber}`
+                      : "Fine payment"
+                    : item.note;
+
+                return (
+                  <div
+                    key={`${item.type}-${item.id}`}
+                    className="border-b border-slate-200 py-3 last:border-b-0"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900">{title}</p>
+
+                        {subtitle && (
+                          <p className="text-xs text-slate-500">{subtitle}</p>
+                        )}
+                      </div>
+
+                      <p
+                        className={`shrink-0 font-semibold ${
+                          isSpending ? "text-red-600" : "text-emerald-800"
+                        }`}
+                      >
+                        {isSpending ? "-" : "+"} {item.amount.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </section>
 
         {/* Error */}
         {actionError && (
           <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-4 py-3">
-            <p className="text-sm text-red-700">
-              {actionError}
-            </p>
+            <p className="text-sm text-red-700">{actionError}</p>
           </div>
         )}
 
         {/* Record spending */}
         <section className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="font-semibold text-slate-900">
-            Record spending
-          </h2>
+          <h2 className="font-semibold text-slate-900">Record spending</h2>
 
           <div className="mt-3">
             <label
@@ -224,14 +243,11 @@ export default function GroupFundPage() {
             onClick={() => spendingMutation.mutate()}
             className="mt-3 w-full rounded-md bg-emerald-100 py-3 text-sm font-semibold text-emerald-900 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {spendingMutation.isPending
-              ? "Recording..."
-              : "Record spending"}
+            {spendingMutation.isPending ? "Recording..." : "Record spending"}
           </button>
 
           <p className="mt-3 text-xs text-slate-500">
-            Spending more than the available balance is
-            refused.
+            Spending more than the available balance is refused.
           </p>
         </section>
       </main>
