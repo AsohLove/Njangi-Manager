@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import type { registerDto, loginDto, groupDto, Payment } from "@/types/entities";
+import type { registerDto, loginDto, groupDto, Payment, Rule } from "@/types/entities";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -168,4 +168,22 @@ export async function updatePositionsOrder(
 export async function getSharebyCode(code:string) {
  const response = await apiClient.get(`/share/${code}`)
  return response.data;
+}
+
+export async function getFineRules(id: number) {
+  const response = await apiClient.get(`/groups/${id}/fine-rules`);
+  return response.data;
+}
+
+export async function createFineRule(
+  groupId: number,
+  payload: Rule | FormData,
+) {
+  const response = await apiClient.post(`/groups/${groupId}/fine-rules`, payload);
+  return response.data;
+}
+
+export async function deleteFineRule(ruleId: number) {
+  const response = await apiClient.delete(`/fine-rules/${ruleId}`);
+  return response.data;
 }

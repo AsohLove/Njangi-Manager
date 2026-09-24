@@ -172,3 +172,8 @@ export interface ShareGroupResponse {
   current_round: ShareCurrentRound | null;
   fines: ShareFine[];
 }
+
+export interface Rule {
+  name: string,
+  default_amount: number,
+}

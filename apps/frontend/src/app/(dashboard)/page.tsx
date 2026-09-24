@@ -11,7 +11,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function Dashboard() {
   const { data: groups, isLoading, isError } = useGroups();
-  const treasurer = useCurrentUser(); // Safely reads user without SSR hydration errors
+  const treasurer = useCurrentUser();
 
   return (
     <div className="pb-20">
