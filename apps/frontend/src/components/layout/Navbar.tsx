@@ -35,7 +35,7 @@ export function BottomNavbar() {
               href={targetHref}
               className={`flex flex-col items-center p-1.5 rounded-xl transition-all ${
                 isActive
-                  ? "bg-emerald-50 text-emerald-600 font-medium"
+                  ? "text-emerald-950 font-medium"
                   : "text-slate-400 hover:text-slate-600"
               }`}
             >

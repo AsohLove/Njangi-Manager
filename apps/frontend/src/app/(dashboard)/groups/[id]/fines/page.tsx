@@ -188,7 +188,7 @@ export default function FinePage() {
                       type="button"
                       disabled={payFineMutation.isPending}
                       onClick={() => payFineMutation.mutate(fine.id)}
-                      className="rounded-md bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-900 disabled:opacity-50"
+                      className="rounded-md bg-emerald-900/10 px-3 py-2 text-xs font-semibold text-emerald-900 disabled:opacity-50"
                     >
                       Mark paid
                     </button>
@@ -217,7 +217,7 @@ export default function FinePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-slate-900">{fine.amount.toLocaleString()}</span>
-                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-bold text-emerald-800">PAID</span>
+                    <span className="rounded-full bg-emerald-900/10 px-2 py-1 text-[11px] font-bold text-emerald-800">PAID</span>
                   </div>
                 </div>
               ))}
@@ -287,7 +287,7 @@ export default function FinePage() {
           <button
             type="button"
             onClick={() => setShowApplyForm(true)}
-            className="w-full rounded-lg bg-emerald-100 py-3 text-sm font-semibold text-emerald-900"
+            className="w-full rounded-lg bg-emerald-900/10 py-3 text-sm font-semibold text-emerald-900"
           >
             + Apply a fine
           </button>
