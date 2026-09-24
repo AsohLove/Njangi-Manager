@@ -32,6 +32,7 @@ export type GroupProps = {
   collectorPositionId: number;
   paidCount: number;
   totalMembers: number;
+  totalPositions: number;
 };
 
 export type SelectionMethod = "auto" | "app_draw" | "manual_draw";

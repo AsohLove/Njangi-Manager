@@ -54,7 +54,12 @@ export class GroupsService {
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
-          select: { members: true },
+          select: {
+            members: true,
+            positions: {
+              where: { isActive: true },
+            },
+          },
         },
         cycles: {
           where: { status: 'active' },
@@ -95,6 +100,7 @@ export class GroupsService {
         shareCode: group.shareCode,
         createdAt: group.createdAt,
         totalMembers: group._count.members,
+        totalPositions: group._count.positions,
         currentRoundNumber: currentRound?.number ?? null,
         collectorName: collectorMember?.fullName ?? null,
         collectorPositionId: currentRound?.collectorPositionId ?? null,

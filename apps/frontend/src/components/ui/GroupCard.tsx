@@ -17,6 +17,7 @@ export interface Group {
   collectorPositionId: number;
   paidCount: number;
   totalMembers: number;
+  totalPositions: number;
 }
 
 interface GroupCardProps {
@@ -37,6 +38,12 @@ export function GroupCard({ group }: GroupCardProps) {
       : group.orderMode === "ballot"
         ? "Ballot draw"
         : group.orderMode;
+
+  const totalPositions = group.totalPositions ?? 0;
+  const progressPercent =
+    totalPositions > 0
+      ? Math.min((group.paidCount ?? 0) / totalPositions, 1) * 100
+      : 0;
 
   return (
     <Link
@@ -66,7 +73,7 @@ export function GroupCard({ group }: GroupCardProps) {
         <div
           className={`rounded-lg py-1.5 bg-emerald-800`}
           style={{
-            width: `${((group.paidCount ?? 0) / (group.totalMembers === 0 ? 1 : group.totalMembers)) * 100}%`,
+            width: `${progressPercent}%`,
           }}
         ></div>
       </div>
@@ -78,7 +85,7 @@ export function GroupCard({ group }: GroupCardProps) {
           </span>
           of{" "}
           <span className="font-bold">
-            {group.totalMembers * group.amount} FCFA
+            {totalPositions * group.amount} FCFA
           </span>
         </span>
         {" · "}
