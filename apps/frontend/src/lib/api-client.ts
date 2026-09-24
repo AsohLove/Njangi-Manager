@@ -270,6 +270,8 @@ export async function createFineRule(
 
 export async function deleteFineRule(ruleId: number) {
   const response = await apiClient.delete(`/fine-rules/${ruleId}`);
+  return response.data;
+}
 export async function getGroupFund(groupId: number) {
   const response = await apiClient.get(`/groups/${groupId}/fund`);
   return response.data;
