@@ -196,6 +196,33 @@ export interface ShareFine {
   amount: number;
   status: string;
 }
+export interface FineRule {
+  id: number;
+  name: string;
+  defaultAmount?: number;
+  default_amount?: number;
+}
+
+export type FineStatus = "owed" | "paid";
+
+export interface Fine {
+  id: number;
+  member_id: number;
+  member_name: string;
+  rule_id: number;
+  rule_name: string;
+  round_id: number | null;
+  amount: number;
+  note: string | null;
+  status: FineStatus;
+  applied_at: string;
+  paid_at: string | null;
+}
+
+export interface FineListResponse {
+  items: Fine[];
+  next: number | null;
+}
 
 export interface ShareGroupResponse {
   name: string;
@@ -211,4 +238,24 @@ export interface ShareGroupResponse {
 export interface Rule {
   name: string,
   default_amount: number,
+}
+
+export type LedgerType = "payment" | "payout" | "fine" | "spending" | "adjustment";
+export type FilterKey = "all" | "payment" | "payout" | "fine" | "funds";
+
+export interface LedgerEntry {
+  id: number;
+  type: LedgerType;
+  amount: number;
+  member_id: number | null;
+  member_name: string | null;
+  round_id: number | null;
+  round_number?: number | null;
+  position_id?: number;
+  position_order?: number | null;
+  label?: string;
+  rule_name?: string;
+  note?: string | null;
+  status?: string;
+  created_at: string;
 }

@@ -6,6 +6,7 @@ import type {
   Payment,
   Rule,
   UpdatePayment,
+  FineListResponse,
 } from "@/types/entities";
 
 export const API_BASE_URL =
@@ -207,6 +208,22 @@ export async function closeRound(
   return response.data;
 }
 
+export async function getLedger(
+  groupId: number,
+  type?:
+    | "all"
+    | "payment"
+    | "payout"
+    | "fine"
+    | "spending"
+    | "adjustment",
+) {
+  const response = await apiClient.get(`/groups/${groupId}/ledger`, {
+    params: { limit: 100, ...(type && type !== "all" ? { type } : {}) },
+  });
+  return response.data;
+}
+
 export async function getSharebyCode(code:string) {
  const response = await apiClient.get(`/share/${code}`)
  return response.data;
@@ -214,6 +231,32 @@ export async function getSharebyCode(code:string) {
 
 export async function getFineRules(id: number) {
   const response = await apiClient.get(`/groups/${id}/fine-rules`);
+  return response.data;
+}
+
+export async function getFines(groupId: number) {
+  const response = await apiClient.get<FineListResponse>(
+    `/groups/${groupId}/fines?limit=100`,
+  );
+  return response.data;
+}
+
+export async function createFine(
+  groupId: number,
+  payload: {
+    member_id: number;
+    rule_id: number;
+    amount?: number;
+    note?: string;
+    round_id?: number;
+  },
+) {
+  const response = await apiClient.post(`/groups/${groupId}/fines`, payload);
+  return response.data;
+}
+
+export async function payFine(fineId: number) {
+  const response = await apiClient.post(`/fines/${fineId}/pay`);
   return response.data;
 }
 

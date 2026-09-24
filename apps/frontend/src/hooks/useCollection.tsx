@@ -9,9 +9,18 @@ import {
   createPayment,
   updatePayment,
   getFineRules,
+  getFines,
+  createFine,
+  payFine,
   createFineRule,
 } from "@/lib/api-client";
-import { groupDto, Payment, Rule, UpdatePayment } from "@/types/entities";
+import {
+  groupDto,
+  Payment,
+  Rule,
+  UpdatePayment,
+  FineListResponse,
+} from "@/types/entities";
 
 export function useGroups() {
   return useQuery({ queryKey: ["groups"], queryFn: getGroups });
@@ -39,6 +48,14 @@ export function useFineRules(id:number){
     queryFn: () => getFineRules(id),
     enabled: !!id,
   })
+}
+
+export function useFines(groupId: number) {
+  return useQuery<FineListResponse>({
+    queryKey: ["fines", groupId],
+    queryFn: () => getFines(groupId),
+    enabled: Number.isInteger(groupId),
+  });
 }
 
 export function useCreateGroup() {
@@ -104,6 +121,31 @@ export function useCreateRule(groupId: number) {
       createFineRule(groupId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fine-rules", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+    },
+  });
+}
+
+export function useCreateFine(groupId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof createFine>[1]) =>
+      createFine(groupId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fines", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+    },
+  });
+}
+
+export function usePayFine(groupId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (fineId: number) => payFine(fineId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fines", groupId] });
       queryClient.invalidateQueries({ queryKey: ["group", groupId] });
     },
   });
