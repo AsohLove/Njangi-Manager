@@ -9,6 +9,8 @@ interface PositionCardProps {
   roundNumber: number;
   defaultAmount: number;
   position: Position;
+  paymentId?: number;
+  currentAmount?: number;
 }
 
 export function PositionCard({
@@ -17,9 +19,9 @@ export function PositionCard({
   roundNumber,
   defaultAmount,
   position,
+  paymentId,
+  currentAmount,
 }: PositionCardProps) {
-  const remainingAmount = defaultAmount - (position.amountPaid || 0);
-
   return (
     <div className="flex items-center justify-between py-3 px-2 border-b border-slate-300/80 last:border-none">
       <div className="flex items-center gap-3">
@@ -74,9 +76,9 @@ export function PositionCard({
             positionId={position.id}
             positionNumber={position.rotationOrder as number}
             memberName={position.memberName}
-            defaultAmount={
-              remainingAmount > 0 ? remainingAmount : defaultAmount
-            }
+            defaultAmount={defaultAmount}
+            paymentId={paymentId}
+            currentAmount={currentAmount}
           />
         )}
       </div>

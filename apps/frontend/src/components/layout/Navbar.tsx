@@ -19,8 +19,8 @@ export function BottomNavbar() {
   const groupId = params?.groupId || params?.id; 
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white z-50 border-t border-slate-300/90">
-      <div className="flex justify-between items-center px-4 py-2">
+    <div className="sticky bottom-0 left-0 right-0 bg-white z-50 border-t border-slate-300/90">
+      <div className="flex justify-between items-center px-4 py-1.5">
         {navItems.map((item) => {
 
           const targetHref = groupId ? `/groups/${groupId}${item.suffix}` : `#`;
@@ -33,13 +33,13 @@ export function BottomNavbar() {
             <Link
               key={item.label}
               href={targetHref}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+              className={`flex flex-col items-center p-1.5 rounded-xl transition-all ${
                 isActive
-                  ? "bg-emerald-50 text-emerald-600 font-medium"
+                  ? "text-emerald-950 font-medium"
                   : "text-slate-400 hover:text-slate-600"
               }`}
             >
-              <item.icon size={20} />
+              <item.icon size={18} />
               <span className="text-xs">{item.label}</span>
             </Link>
           );

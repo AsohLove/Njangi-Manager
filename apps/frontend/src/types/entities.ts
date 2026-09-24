@@ -32,6 +32,7 @@ export type GroupProps = {
   collectorPositionId: number;
   paidCount: number;
   totalMembers: number;
+  totalPositions: number;
 };
 
 export type SelectionMethod = "auto" | "app_draw" | "manual_draw";
@@ -51,6 +52,7 @@ export interface Position {
   memberId: number;
   memberName: string;
   rotationOrder: number | null;
+  payoutOrder: number | null;
   isActive: boolean;
   positionLabel: string | null; // e.g., "position 1 of 2"
   payoutStatus: PayoutStatus; // "COLLECTED" | "THIS ROUND" | null
@@ -99,6 +101,36 @@ export interface OpenRoundSummary {
   payout: Payout | null;
 }
 
+export interface RoundPositionStatus {
+  position_id: number;
+  member_id: number;
+  member_name: string;
+  expected: number;
+  paid: number;
+  status: "waiting" | "partly_paid" | "paid";
+  is_late: boolean;
+}
+
+export interface RoundDetails {
+  id: number;
+  cycle_id: number;
+  number: number;
+  collector_position_id: number;
+  collector: {
+    position_id: number;
+    member_id: number;
+    member_name: string;
+  };
+  selection_method: SelectionMethod;
+  due_date: string;
+  status: "open" | "closed";
+  expected_amount: number;
+  collected_amount: number;
+  positions: RoundPositionStatus[];
+  opened_at: string;
+  closed_at: string | null;
+}
+
 export interface GroupDetailResponse {
   id: number;
   ownerId: number;
@@ -121,6 +153,10 @@ export interface GroupDetailResponse {
 export interface Payment {
   position_id: number;
   amount?: number;
+}
+
+export interface UpdatePayment {
+  amount: number;
 }
 
 export interface ShareCollector {
@@ -161,6 +197,33 @@ export interface ShareFine {
   amount: number;
   status: string;
 }
+export interface FineRule {
+  id: number;
+  name: string;
+  defaultAmount?: number;
+  default_amount?: number;
+}
+
+export type FineStatus = "owed" | "paid";
+
+export interface Fine {
+  id: number;
+  member_id: number;
+  member_name: string;
+  rule_id: number;
+  rule_name: string;
+  round_id: number | null;
+  amount: number;
+  note: string | null;
+  status: FineStatus;
+  applied_at: string;
+  paid_at: string | null;
+}
+
+export interface FineListResponse {
+  items: Fine[];
+  next: number | null;
+}
 
 export interface ShareGroupResponse {
   name: string;
@@ -171,4 +234,29 @@ export interface ShareGroupResponse {
   fund_source_note: string;
   current_round: ShareCurrentRound | null;
   fines: ShareFine[];
+}
+
+export interface Rule {
+  name: string,
+  default_amount: number,
+}
+
+export type LedgerType = "payment" | "payout" | "fine" | "spending" | "adjustment";
+export type FilterKey = "all" | "payment" | "payout" | "fine" | "funds";
+
+export interface LedgerEntry {
+  id: number;
+  type: LedgerType;
+  amount: number;
+  member_id: number | null;
+  member_name: string | null;
+  round_id: number | null;
+  round_number?: number | null;
+  position_id?: number;
+  position_order?: number | null;
+  label?: string;
+  rule_name?: string;
+  note?: string | null;
+  status?: string;
+  created_at: string;
 }

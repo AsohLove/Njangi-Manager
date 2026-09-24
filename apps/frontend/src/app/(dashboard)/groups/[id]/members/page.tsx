@@ -9,6 +9,8 @@ import {
   deleteMember,
   deletePosition,
   getGroupbyId,
+  createCycle,
+  createRound,
   updatePositionsOrder,
 } from "@/lib/api-client";
 import type { Member, Position } from "@/types/entities";
@@ -47,8 +49,55 @@ export default function MemberPage() {
   const shuffleMutation = useMutation({
     mutationFn: (positionIds: number[]) =>
       updatePositionsOrder(groupId, positionIds),
+    onMutate: () => {
+      setActionError(null);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+    },
+    onError: (error: Error) => {
+      setActionError(error.message);
+    },
+  });
+
+  const cycleMutation = useMutation({
+    mutationFn: () => createCycle(groupId),
+    onMutate: () => {
+      setActionError(null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["group", groupId],
+      });
+    },
+    onError: (error: Error) => {
+      setActionError(error.message);
+    },
+  });
+
+  const roundMutation = useMutation({
+    mutationFn: () => {
+      const cycleId = group?.activeCycle?.id;
+
+      if (!cycleId) {
+        throw new Error("Start a cycle before opening a round");
+      }
+
+      return createRound(
+        cycleId,
+        group.orderMode === "fixed" ? "auto" : "app_draw",
+      );
+    },
+    onMutate: () => {
+      setActionError(null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["group", groupId],
+      });
+    },
+    onError: (error: Error) => {
+      setActionError(error.message);
     },
   });
 
@@ -127,10 +176,15 @@ export default function MemberPage() {
   const collectedIds: number[] = group.collectedPositionIds ?? [];
 
   const cycleStarted = Boolean(group.activeCycle);
+  const roundOpen = Boolean(group.openRound);
 
   const orderedPositions = [...positions]
     .filter((position) => position.isActive)
-    .sort((a, b) => (a.rotationOrder ?? 999) - (b.rotationOrder ?? 999));
+    .sort(
+      (a, b) =>
+        (a.rotationOrder ?? a.payoutOrder ?? 999) -
+        (b.rotationOrder ?? b.payoutOrder ?? 999),
+    );
 
   const canEditMembers = !cycleStarted;
   const canShuffle = !cycleStarted && group.orderMode === "fixed";
@@ -254,6 +308,24 @@ export default function MemberPage() {
               className="w-full rounded-md bg-slate-100 py-3 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:text-slate-400"
             >
               {shuffleMutation.isPending ? "Shuffling..." : "Shuffle order"}
+            </button>
+
+            <button
+              type="button"
+              disabled={cycleStarted || cycleMutation.isPending}
+              onClick={() => cycleMutation.mutate()}
+              className="w-full rounded-md bg-emerald-800 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+            >
+              {cycleMutation.isPending ? "Starting cycle..." : "Start cycle"}
+            </button>
+
+            <button
+              type="button"
+              disabled={!cycleStarted || roundOpen || roundMutation.isPending}
+              onClick={() => roundMutation.mutate()}
+              className="w-full rounded-md bg-slate-900 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+            >
+              {roundMutation.isPending ? "Opening round..." : "Open round"}
             </button>
 
             <Link

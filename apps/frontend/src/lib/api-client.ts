@@ -1,5 +1,13 @@
 import axios, { AxiosError } from "axios";
-import type { registerDto, loginDto, groupDto, Payment } from "@/types/entities";
+import type {
+  registerDto,
+  loginDto,
+  groupDto,
+  Payment,
+  Rule,
+  UpdatePayment,
+  FineListResponse,
+} from "@/types/entities";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -121,6 +129,11 @@ export async function createPayment({
   return response.data;
 }
 
+export async function updatePayment(paymentId: number, payload: UpdatePayment) {
+  const response = await apiClient.patch(`/payments/${paymentId}`, payload);
+  return response.data;
+}
+
 export function getStoredUser() {
   if (typeof window === "undefined") return null;
   const stored = window.localStorage.getItem("treasurer_user");
@@ -165,11 +178,98 @@ export async function updatePositionsOrder(
   });
 }
 
+export async function createCycle(groupId: number) {
+  const response = await apiClient.post(`/groups/${groupId}/cycles`);
+  return response.data;
+}
+
+export async function createRound(
+  cycleId: number,
+  method: "auto" | "app_draw",
+) {
+  const response = await apiClient.post(`/cycles/${cycleId}/rounds`, {
+    method,
+  });
+  return response.data;
+}
+
+export async function getRound(roundId: number) {
+  const response = await apiClient.get(`/rounds/${roundId}`);
+  return response.data;
+}
+
+export async function closeRound(
+  roundId: number,
+  acknowledgeShortfall: boolean,
+) {
+  const response = await apiClient.post(`/rounds/${roundId}/close`, {
+    acknowledge_shortfall: acknowledgeShortfall,
+  });
+  return response.data;
+}
+
+export async function getLedger(
+  groupId: number,
+  type?:
+    | "all"
+    | "payment"
+    | "payout"
+    | "fine"
+    | "spending"
+    | "adjustment",
+) {
+  const response = await apiClient.get(`/groups/${groupId}/ledger`, {
+    params: { limit: 100, ...(type && type !== "all" ? { type } : {}) },
+  });
+  return response.data;
+}
+
 export async function getSharebyCode(code:string) {
  const response = await apiClient.get(`/share/${code}`)
  return response.data;
 }
 
+export async function getFineRules(id: number) {
+  const response = await apiClient.get(`/groups/${id}/fine-rules`);
+  return response.data;
+}
+
+export async function getFines(groupId: number) {
+  const response = await apiClient.get<FineListResponse>(
+    `/groups/${groupId}/fines?limit=100`,
+  );
+  return response.data;
+}
+
+export async function createFine(
+  groupId: number,
+  payload: {
+    member_id: number;
+    rule_id: number;
+    amount?: number;
+    note?: string;
+    round_id?: number;
+  },
+) {
+  const response = await apiClient.post(`/groups/${groupId}/fines`, payload);
+  return response.data;
+}
+
+export async function payFine(fineId: number) {
+  const response = await apiClient.post(`/fines/${fineId}/pay`);
+  return response.data;
+}
+
+export async function createFineRule(
+  groupId: number,
+  payload: Rule | FormData,
+) {
+  const response = await apiClient.post(`/groups/${groupId}/fine-rules`, payload);
+  return response.data;
+}
+
+export async function deleteFineRule(ruleId: number) {
+  const response = await apiClient.delete(`/fine-rules/${ruleId}`);
 export async function getGroupFund(groupId: number) {
   const response = await apiClient.get(`/groups/${groupId}/fund`);
   return response.data;

@@ -13,7 +13,7 @@ export default function GroupPageLayout({children}: GroupLayoutProps) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <main>{children}</main>
+      <main className="min-h-screen">{children}</main>
       <BottomNavbar />
     </div>
   );

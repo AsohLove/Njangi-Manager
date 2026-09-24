@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useGroup } from "@/hooks/useCollection";
 import { PositionCard } from "@/components/ui/RoundCard";
-import { Position } from "@/types/entities";
+import { Position, RoundPayment } from "@/types/entities";
 import { Card } from "@/components/ui/Card";
 
 export default function GroupPage() {
@@ -34,6 +34,12 @@ export default function GroupPage() {
   }
 
   const openRound = group.openRound;
+  const paymentByPosition = new Map<number, RoundPayment>(
+    (openRound?.payments ?? []).map((payment: RoundPayment) => [
+      payment.positionId,
+      payment,
+    ]),
+  );
 
   // Format Due Date (e.g. "Sat 30 Nov")
   const formattedDueDate = openRound?.dueDate
@@ -154,10 +160,24 @@ export default function GroupPage() {
                 roundNumber={openRound?.number ?? 1}
                 defaultAmount={group.amount}
                 position={pos}
+                paymentId={paymentByPosition.get(pos.id)?.id}
+                currentAmount={paymentByPosition.get(pos.id)?.amount}
               />
             ))}
           </div>
         </div>
+
+        {openRound && (
+          <Link
+            href={`/groups/${groupId}/rounds/${openRound.id}/close`}
+            className="mt-3 block w-full rounded-md border border-amber-300 bg-amber-50 py-3 text-center text-sm font-semibold text-amber-700"
+          >
+            Close round {openRound.number} short
+          </Link>
+        )}
+        <p className="p-3 text-slate-400 text-[13px]">
+          Every position pays every round, including the collector&apos;s. A position cannot pay twice: the app refuses it.
+        </p>
       </div>
     </div>
   );
