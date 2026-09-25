@@ -41,7 +41,6 @@ export default function GroupPage() {
     ]),
   );
 
-  // Format Due Date (e.g. "Sat 30 Nov")
   const formattedDueDate = openRound?.dueDate
     ? new Date(openRound.dueDate).toLocaleDateString("en-GB", {
         weekday: "short",
@@ -50,7 +49,6 @@ export default function GroupPage() {
       })
     : "—";
 
-  // Financial calculations for collector card
   const targetAmount =
     openRound?.targetAmount ?? group.totalPositions * group.amount;
   const collectedAmount = openRound?.collectedAmount ?? 0;
@@ -61,15 +59,25 @@ export default function GroupPage() {
 
   const handleShare = () => {
     const shareUrl = `${window.location.origin}/members/${group.shareCode}`;
+
+    const shareTitle = `${group.name} · Njangi Group Details`;
+
+    const shareText =
+      `🤝 Join / View ${group.name} on Njangi Manager\n` +
+      `💰 Contribution: ${group.amount.toLocaleString()} XAF (${group.frequency})\n` +
+      `👥 Members: ${group.totalMembers} | Round ${group.currentRoundNumber ?? 1}\n` +
+      `🎯 Current Collector: ${group.collectorName ?? "N/A"}\n\n` +
+      `Click the link to view complete group details, position lists, and rules:`;
     if (navigator.share) {
       navigator.share({
-        title: group.name,
-        text: `Check out the details for ${group.name}`,
+        title: shareTitle,
+        text: shareText,
         url: shareUrl,
       });
     } else {
-      navigator.clipboard.writeText(shareUrl);
-      alert("Group page link copied to clipboard");
+      const fullMessage = `${shareText}\n${shareUrl}`;
+      navigator.clipboard.writeText(fullMessage);
+      alert("Group invitation & summary link copied to clipboard!");
     }
   };
 
@@ -176,7 +184,8 @@ export default function GroupPage() {
           </Link>
         )}
         <p className="p-3 text-slate-400 text-[13px]">
-          Every position pays every round, including the collector&apos;s. A position cannot pay twice: the app refuses it.
+          Every position pays every round, including the collector&apos;s. A
+          position cannot pay twice: the app refuses it.
         </p>
       </div>
     </div>
