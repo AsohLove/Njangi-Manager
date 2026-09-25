@@ -13,7 +13,6 @@ export default function NewMemberPage() {
   const queryClient = useQueryClient();
 
   const groupId = Number(params.id);
-
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
