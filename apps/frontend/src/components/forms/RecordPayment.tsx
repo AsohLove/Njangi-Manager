@@ -38,6 +38,7 @@ export function RecordPaymentDrawer({
   const [amount, setAmount] = React.useState<number | string>(
     paymentId !== undefined ? defaultAmount - currentAmount : defaultAmount,
   );
+  const [error, setError] = React.useState("");
 
   const { mutate: recordPayment, isPending } = useCreatePayment(groupId);
   const { mutate: updatePayment, isPending: isUpdating } = useUpdatePayment(
@@ -54,12 +55,16 @@ export function RecordPaymentDrawer({
       return;
     }
 
+    setError("");
     const onSuccess = () => setOpen(false);
+    const onError = (requestError: Error) => {
+      setError(requestError.message || "Unable to save payment. Please try again.");
+    };
 
     if (isUpdate) {
       updatePayment(
         { paymentId, payload: { amount: numericAmount } },
-        { onSuccess },
+        { onSuccess, onError },
       );
       return;
     }
@@ -69,12 +74,18 @@ export function RecordPaymentDrawer({
         roundId,
         payload: { position_id: positionId, amount: numericAmount },
       },
-      { onSuccess },
+      { onSuccess, onError },
     );
   };
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) setError("");
+      }}
+    >
       <DrawerTrigger
         type="button"
         className="bg-emerald-900/10 text-emerald-950 font-semibold rounded-md px-3 py-1.5 text-xs transition-colors"
@@ -113,6 +124,11 @@ export function RecordPaymentDrawer({
               {isUpdate && (
                 <p className="text-xs font-medium text-slate-500">
                   Amount left: {(defaultAmount - currentAmount).toLocaleString()} FCFA
+                </p>
+              )}
+              {error && (
+                <p role="alert" className="text-sm font-medium text-red-700">
+                  {error}
                 </p>
               )}
             </div>
