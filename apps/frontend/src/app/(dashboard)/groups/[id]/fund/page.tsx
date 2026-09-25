@@ -11,6 +11,24 @@ import {
   getGroupbyId,
 } from "@/lib/api-client";
 
+type FundHistoryItem = {
+  type: "fine" | "adjustment" | "spending";
+  id: number;
+  amount: number;
+  memberName: string | null;
+  roundNumber: number | null;
+  note: string | null;
+  createdAt: string | null;
+};
+
+type GroupFund = {
+  balance: number;
+  paid_fines: number;
+  adjustments: number;
+  spending: number;
+  history: FundHistoryItem[];
+};
+
 export default function GroupFundPage() {
   const params = useParams();
   const groupId = Number(params.id);
@@ -31,7 +49,7 @@ export default function GroupFundPage() {
     data: fund,
     isLoading: fundLoading,
     isError: fundError,
-  } = useQuery({
+  } = useQuery<GroupFund>({
     queryKey: ["group-fund", groupId],
     queryFn: () => getGroupFund(groupId),
     enabled: Number.isInteger(groupId),
