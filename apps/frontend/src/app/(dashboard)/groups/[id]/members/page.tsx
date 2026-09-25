@@ -251,10 +251,6 @@ export default function MemberPage() {
                   memberPositions.findIndex((item) => item.id === position.id) +
                   1;
 
-                const hasCollected = collectedIds.includes(position.id);
-                const isCollectingThisRound =
-                  position.id === group.openRound?.collectorPositionId;
-
                 return (
                   <div
                     key={position.id}

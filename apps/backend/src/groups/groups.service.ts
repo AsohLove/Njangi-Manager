@@ -425,9 +425,9 @@ export class GroupsService {
       throw new NotFoundException('Group not found');
     }
 
-    if (group.orderMode !== 'fixed') {
+    if (group.orderMode !== 'ballot') {
       throw new BadRequestException(
-        'Reordering positions is only allowed in fixed mode',
+        'Shuffling positions is only allowed in ballot mode',
       );
     }
 
