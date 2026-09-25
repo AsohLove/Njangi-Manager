@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import {
   getGroups,
   getGroupbyId,
@@ -13,6 +14,7 @@ import {
   createFine,
   payFine,
   createFineRule,
+  logoutAdmin
 } from "@/lib/api-client";
 import {
   groupDto,
@@ -147,6 +149,27 @@ export function usePayFine(groupId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fines", groupId] });
       queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+    },
+  });
+}
+
+export function useLogout() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: logoutAdmin,
+    onSuccess: () => {
+      queryClient.clear();
+      router.push("/login");
+      router.refresh();
+    },
+    onError: (error) => {
+      console.error("Failed to log out:", error);
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("treasurer_user");
+      }
+      router.push("/login");
     },
   });
 }

@@ -85,14 +85,15 @@ export async function registerAdmin(data: registerDto) {
 }
 
 export async function logoutAdmin() {
-  const response = await apiClient.post("/auth/logout");
-  const user = response.data;
-
-  if (typeof window !== "undefined" && user) {
-    window.localStorage.setItem("treasurer_user", JSON.stringify(user));
+  try {
+    await apiClient.post("/auth/logout");
+  } catch (error) {
+    console.error("Logout API request failed:", error);
+  } finally {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("treasurer_user");
+    }
   }
-
-  return user;
 }
 
 export async function getGroups() {

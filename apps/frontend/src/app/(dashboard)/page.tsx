@@ -1,25 +1,41 @@
 "use client";
 
 import Link from "next/link"; 
-import { Plus } from "lucide-react";
+import { Plus, LogOut } from "lucide-react";
 
 import { useGroups } from "@/hooks/useCollection";
 import { GroupCard } from "@/components/ui/GroupCard";
 import { Card } from "@/components/ui/Card";
 import { GroupProps } from "@/types/entities";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useLogout } from "@/hooks/useCollection";
 
 export default function Dashboard() {
   const { data: groups, isLoading, isError } = useGroups();
+  const { mutate: logout, isPending } = useLogout();
   const treasurer = useCurrentUser();
 
   return (
     <div className="pb-20">
       <Card>
-        <h1 className="text-xl font-bold leading-tight">My Groups</h1>
-        <p className="text-xs text-emerald-100/90 mt-0.5 font-normal">
-          Treasurer: {treasurer?.fullName ?? "—"}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold leading-tight">My Groups</h1>
+            <p className="text-xs text-emerald-100/90 mt-0.5 font-normal">
+              Treasurer: {treasurer?.fullName ?? "—"}
+            </p>
+          </div>
+          <div>
+            <button
+              onClick={() => logout()}
+              disabled={isPending}
+              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-950 rounded-lg hover:bg-emerald-800 disabled:opacity-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              {isPending ? "Logging out..." : "Log Out"}
+            </button>
+          </div>
+        </div>
       </Card>
 
       {isLoading && (
