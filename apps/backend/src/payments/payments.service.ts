@@ -226,15 +226,12 @@ export class PaymentsService {
       throw new ConflictException('Cannot update payment for a closed round');
     }
 
-    if (dto.amount <= payment.amount) {
-      throw new BadRequestException(
-        'Payment amount must be higher than the current amount',
-      );
-    }
+    const maxAmount = payment.round.cycle.group.amount;
+    const updatedAmount = payment.amount + dto.amount;
 
-    if (dto.amount > payment.round.cycle.group.amount) {
+    if (updatedAmount > maxAmount) {
       throw new BadRequestException(
-        'Payment amount cannot exceed the group amount',
+        `Payment total cannot exceed the group amount of ${maxAmount}`,
       );
     }
 
@@ -243,7 +240,7 @@ export class PaymentsService {
         id: paymentId,
       },
       data: {
-        amount: dto.amount,
+        amount: updatedAmount,
       },
     });
   }
