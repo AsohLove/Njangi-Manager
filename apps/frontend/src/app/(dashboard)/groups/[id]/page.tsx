@@ -66,7 +66,7 @@ export default function GroupPage() {
       `🤝 Join / View ${group.name} on Njangi Manager\n` +
       `💰 Contribution: ${group.amount.toLocaleString()} XAF (${group.frequency})\n` +
       `👥 Members: ${group.totalMembers} | Round ${group.currentRoundNumber ?? 1}\n` +
-      `🎯 Current Collector: ${group.collectorName ?? "N/A"}\n\n` +
+      `🎯 Current Collector: ${group.openRound.collectorName ?? "N/A"}\n\n` +
       `Click the link to view complete group details, position lists, and rules:`;
     if (navigator.share) {
       navigator.share({
