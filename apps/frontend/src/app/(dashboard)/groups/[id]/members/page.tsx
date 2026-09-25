@@ -187,7 +187,7 @@ export default function MemberPage() {
     );
 
   const canEditMembers = !cycleStarted;
-  const canShuffle = !cycleStarted && group.orderMode === "fixed";
+  const canShuffle = !cycleStarted && group.orderMode === "ballot";
 
   return (
     <div className="min-h-screen bg-slate-50">
