@@ -173,7 +173,6 @@ export default function MemberPage() {
 
   const members: Member[] = group.members ?? [];
   const positions: Position[] = group.positions ?? [];
-  const collectedIds: number[] = group.collectedPositionIds ?? [];
 
   const cycleStarted = Boolean(group.activeCycle);
   const roundOpen = Boolean(group.openRound);
