@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/Card";
 import { useState } from "react";
@@ -11,6 +11,7 @@ import { loginAdmin } from "@/lib/api-client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,7 +21,8 @@ export default function LoginPage() {
     mutationFn: loginAdmin,
     onSuccess: () => {
       setError("");
-      router.push("/");
+      const redirect = searchParams.get("redirect") || "/";
+      router.push(redirect);
     },
     onError: (err) => {
       setError(err?.message || "Login failed");

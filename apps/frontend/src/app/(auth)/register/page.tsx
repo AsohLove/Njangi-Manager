@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 
-import { registerAdmin } from "@/lib/api-client";
+import { registerAdmin, loginAdmin } from "@/lib/api-client";
 import { Card } from "@/components/ui/Card";
 
 export default function RegisterPage() {
@@ -17,18 +17,30 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const registerMutation = useMutation({
-    mutationFn: registerAdmin,
-    onSuccess: () => {
-      setError("");
-      router.push("/");
-    },
-    onError: (err) => {
-      setError(
-        err?.message || "Registration failed",
-      );
-    },
-  });
+ const registerMutation = useMutation({
+   mutationFn: async ({
+     email,
+     password,
+     full_name,
+   }: {
+     email: string;
+     password: string;
+     full_name: string;
+   }) => {
+     await registerAdmin({ email, password, full_name });
+
+     await loginAdmin({ email, password });
+   },
+
+   onSuccess: () => {
+     setError("");
+     router.push("/");
+   },
+
+   onError: (err) => {
+     setError(err?.message || "Registration failed");
+   },
+ });
 
   const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
