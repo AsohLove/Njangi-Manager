@@ -4,8 +4,9 @@ The frontend is a Next.js 16 application for treasurers who manage Njangi groups
 
 ## Requirements
 
-- Node.js and npm.
-- The backend running locally or a deployed Njangi Manager API.
+* Node.js and npm.
+* The backend running locally or a deployed Njangi Manager API.
+* Docker and Docker Compose are optional when using the full containerized stack.
 
 Install dependencies from the repository root or this directory:
 
@@ -33,7 +34,7 @@ Start the development server:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). For a production build:
+Open http://localhost:3000. For a production build:
 
 ```bash
 npm run build
@@ -48,31 +49,53 @@ npm run lint
 
 There is currently no frontend test script in `package.json`.
 
+## Docker
+
+The frontend has its own Dockerfile at:
+
+```text
+apps/frontend/Dockerfile
+```
+
+When running the complete application with Docker Compose, use the root command:
+
+```bash
+docker compose up --build
+```
+
+The frontend is then available at:
+
+```text
+http://localhost:3000
+```
+
+The API base URL is provided to the Next.js build through `NEXT_PUBLIC_API_BASE_URL`.
+
 ## Routes
 
 ### Public routes
 
-| Route | Purpose |
-| --- | --- |
-| `/login` | Treasurer login form. |
-| `/register` | Create a treasurer account. |
-| `/members/[code]` | Read-only group summary accessed through a share code; no login is required. |
+| Route             | Purpose                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `/login`          | Treasurer login form.                                                               |
+| `/register`       | Create a treasurer account and automatically sign in after successful registration. |
+| `/members/[code]` | Read-only group summary accessed through a share code; no login is required.        |
 
 ### Authenticated treasurer routes
 
 The dashboard layout checks `GET /api/groups` before rendering. Failed or expired sessions redirect to `/login`.
 
-| Route | Purpose |
-| --- | --- |
-| `/` | List the treasurer's groups and create a new group. |
-| `/groups/new` | Configure group name, contribution amount, frequency, start date, and payout order. |
-| `/groups/[id]` | View the current round, collector, payment progress, positions, and share action. |
-| `/groups/[id]/members` | Add or remove members and positions, arrange fixed rotation order, start cycles, and open rounds. |
-| `/groups/[id]/members/new` | Add a member with an optional phone number. |
-| `/groups/[id]/fines` | View fine rules and fines, create rules, apply fines, and mark fines paid. |
-| `/groups/[id]/fund` | View fund balance and history and record spending. |
-| `/groups/[id]/ledger` | Review payments, payouts, fines, spending, and adjustments with filters. |
-| `/groups/[id]/rounds/[roundId]/close` | Review and close a round, including shortfall acknowledgement. |
+| Route                                 | Purpose                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `/`                                   | List the treasurer's groups and create a new group.                                               |
+| `/groups/new`                         | Configure group name, contribution amount, frequency, start date, and payout order.               |
+| `/groups/[id]`                        | View the current round, collector, payment progress, positions, and share action.                 |
+| `/groups/[id]/members`                | Add or remove members and positions, arrange fixed rotation order, start cycles, and open rounds. |
+| `/groups/[id]/members/new`            | Add a member with an optional phone number.                                                       |
+| `/groups/[id]/fines`                  | View fine rules and fines, create rules, apply fines, and mark fines paid.                        |
+| `/groups/[id]/fund`                   | View fund balance and history and record spending.                                                |
+| `/groups/[id]/ledger`                 | Review payments, payouts, fines, spending, and adjustments with filters.                          |
+| `/groups/[id]/rounds/[roundId]/close` | Review and close a round, including shortfall acknowledgement.                                    |
 
 ## Main user flow
 
@@ -88,28 +111,30 @@ The dashboard layout checks `GET /api/groups` before rendering. Failed or expire
 
 The API wrapper is in `src/lib/api-client.ts`. It provides functions for:
 
-- Authentication and local treasurer display state.
-- Groups, members, positions, cycles, rounds, and payments.
-- Fine rules, fines, and fine payments.
-- Fund spending, ledger entries, and public share data.
+* Authentication and local treasurer display state.
+* Groups, members, positions, cycles, rounds, and payments.
+* Fine rules, fines, and fine payments.
+* Fund spending, ledger entries, and public share data.
 
 React Query hooks in `src/hooks/useCollection.tsx` invalidate related queries after mutations so group, round, fine, and fund screens refresh without a full page reload. A `401` response redirects to login; the displayed treasurer profile is also cached in `localStorage` as `treasurer_user`.
+
+The login flow also supports a `redirect` query parameter, so an unauthenticated user can be returned to the protected page they originally requested.
 
 ## Project structure
 
 ```text
 src/
-	app/          App Router pages and layouts
-	components/   Forms, layout components, and reusable UI
-	hooks/        React Query hooks for application operations
-	lib/          Axios API client, query client, and utilities
-	providers/    React Query provider
-	types/        Shared frontend entity and DTO types
+    app/          App Router pages and layouts
+    components/   Forms, layout components, and reusable UI
+    hooks/        React Query hooks for application operations
+    lib/          Axios API client, query client, and utilities
+    providers/    React Query provider
+    types/        Shared frontend entity and DTO types
 ```
 
 The root layout loads Geist through `next/font`, applies global styles, and provides the React Query client. The dashboard layout wraps protected pages with `AuthGuard`; group pages additionally render the bottom navigation.
 
 ## Related documentation
 
-- [Repository overview](../../README.md)
-- [Backend API and database documentation](../backend/README.md)
+* [Repository overview](../../README.md)
+* [Backend API and database documentation](../backend/README.md)
