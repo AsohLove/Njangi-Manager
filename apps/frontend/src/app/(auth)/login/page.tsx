@@ -6,10 +6,11 @@ import { useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/Card";
 import { useState } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { loginAdmin } from "@/lib/api-client";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -125,5 +126,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
