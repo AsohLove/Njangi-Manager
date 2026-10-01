@@ -40,10 +40,18 @@ export function RecordPaymentDrawer({
   );
   const [error, setError] = React.useState("");
 
+  React.useEffect(() => {
+    if (open) {
+      setAmount(
+        paymentId !== undefined ? defaultAmount - currentAmount : defaultAmount,
+      );
+      setError("");
+    }
+  }, [open, paymentId, defaultAmount, currentAmount]);
+
   const { mutate: recordPayment, isPending } = useCreatePayment(groupId);
-  const { mutate: updatePayment, isPending: isUpdating } = useUpdatePayment(
-    groupId,
-  );
+  const { mutate: updatePayment, isPending: isUpdating } =
+    useUpdatePayment(groupId);
   const isUpdate = paymentId !== undefined;
   const isPendingRequest = isPending || isUpdating;
 
@@ -58,7 +66,9 @@ export function RecordPaymentDrawer({
     setError("");
     const onSuccess = () => setOpen(false);
     const onError = (requestError: Error) => {
-      setError(requestError.message || "Unable to save payment. Please try again.");
+      setError(
+        requestError.message || "Unable to save payment. Please try again.",
+      );
     };
 
     if (isUpdate) {
@@ -123,7 +133,8 @@ export function RecordPaymentDrawer({
               />
               {isUpdate && (
                 <p className="text-xs font-medium text-slate-500">
-                  Amount left: {(defaultAmount - currentAmount).toLocaleString()} FCFA
+                  Amount left:{" "}
+                  {(defaultAmount - currentAmount).toLocaleString()} FCFA
                 </p>
               )}
               {error && (

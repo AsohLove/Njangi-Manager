@@ -28,11 +28,19 @@ export default function CloseRoundPage() {
 
   const closeMutation = useMutation({
     mutationFn: () => closeRound(roundId, acknowledgeShortfall),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
-      queryClient.invalidateQueries({ queryKey: ["round", roundId] });
-      router.push(`/groups/${groupId}`);
-    },
+    onSuccess: async () => {
+  await queryClient.refetchQueries({
+    queryKey: ["group", groupId],
+    exact: true,
+  });
+
+  await queryClient.refetchQueries({
+    queryKey: ["round", roundId],
+    exact: true,
+  });
+
+  router.push(`/groups/${groupId}`);
+},
   });
 
   if (isLoading) {
@@ -88,7 +96,9 @@ export default function CloseRoundPage() {
         )}
 
         <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="mb-3 font-semibold text-slate-900">Still owing</h2>
+          <h2 className="mb-3 font-semibold text-slate-900">
+            {owingPositions.length === 0 ? "Round fully paid" : "Still owing" }
+          </h2>
           {owingPositions.length === 0 ? (
             <p className="text-sm text-emerald-700">Every position is fully paid.</p>
           ) : (
