@@ -174,6 +174,10 @@ export class ShareService {
       amount: group.amount,
       frequency: group.frequency,
       total_rounds: totalPositionsCount,
+      members: group.members.map((member) => ({
+        member_id: member.id,
+        member_name: member.fullName,
+      })),
       fund_balance: fundBalance,
       fund_source_note: 'From paid fines',
 
