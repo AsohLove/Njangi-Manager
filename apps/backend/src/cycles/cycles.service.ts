@@ -37,13 +37,13 @@ export class CyclesService {
       );
     }
 
-    if (group.orderMode === 'fixed') {
+    if (group.orderMode === 'ballot') {
       const isOrderFullySet = group.positions.every(
         (p) => p.rotationOrder !== null,
       );
       if (!isOrderFullySet) {
         throw new ConflictException(
-          'Cannot start a cycle in fixed mode until all active positions have rotation orders assigned',
+          'Cannot start a cycle in ballot mode until all active positions have rotation orders assigned',
         );
       }
     }

@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class ListLedgerDto {
   @IsOptional()
@@ -21,4 +21,8 @@ export class ListLedgerDto {
   @IsInt()
   @Min(1)
   member_id?: number;
+
+  @IsOptional()
+  @IsIn(['payment', 'payout', 'fine', 'spending', 'adjustment'])
+  type?: 'payment' | 'payout' | 'fine' | 'spending' | 'adjustment';
 }
