@@ -49,8 +49,7 @@ export default function GroupPage() {
       })
     : "—";
 
-  const targetAmount =
-    openRound?.targetAmount ?? group.totalPositions * group.amount;
+  const targetAmount = openRound?.targetAmount ?? 0;
   const collectedAmount = openRound?.collectedAmount ?? 0;
   const progressPercent =
     targetAmount > 0
@@ -66,7 +65,7 @@ export default function GroupPage() {
       `🤝 Join / View ${group.name} on Njangi Manager\n` +
       `💰 Contribution: ${group.amount.toLocaleString()} XAF (${group.frequency})\n` +
       `👥 Members: ${group.totalMembers} | Round ${group.currentRoundNumber ?? 1}\n` +
-      `🎯 Current Collector: ${group.openRound.collectorName ?? "N/A"}\n\n` +
+      `🎯 Current Collector: ${group.openRound?.collectorName ?? "N/A"}\n\n` +
       `Click the link to view complete group details, position lists, and rules:`;
     if (navigator.share) {
       navigator.share({
@@ -86,18 +85,35 @@ export default function GroupPage() {
       <Card>
         <div className="flex justify-between items-center gap-2">
           <div className="flex flex-col gap-1leading-tight">
-            <Link
-              href="/"
+            {openRound ? (
+              <>
+                <Link
+                  href="/"
+                  className="flex items-center text-lg font-bold hover:opacity-80 transition-opacity"
+                >
+                  <ChevronLeft size={24} />
+                  Round {openRound.number} of {group.totalPositions}
+                </Link>
 
-              className=" flex items-center text-lg font-bold hover:opacity-80 transition-opacity"
-            >
-              <ChevronLeft size={24} />
-              Round {openRound?.number ?? 1} of {group.totalPositions}
-            </Link>
+                <p className="text-sm ml-4 text-slate-300">
+                  {group.name} · Due {formattedDueDate}
+                </p>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/"
+                  className="flex items-center text-lg font-bold hover:opacity-80 transition-opacity"
+                >
+                  <ChevronLeft size={24} />
+                  Round closed
+                </Link>
 
-            <p className="text-sm ml-4 text-slate-300 ">
-              {group.name} · Due {formattedDueDate}
-            </p>
+                <p className="text-sm ml-4 text-slate-300">
+                  {group.name} · No open round
+                </p>
+              </>
+            )}
           </div>
 
           <button
@@ -111,82 +127,104 @@ export default function GroupPage() {
       </Card>
 
       <div className="px-3 space-y-3">
-        <div className="bg-white rounded-2xl p-4 border border-slate-300/80 space-y-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs text-slate-400 font-normal">
-                Collector this round
+        {openRound ? (
+          <>
+            <div className="bg-white rounded-2xl p-4 border border-slate-300/80 space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs text-slate-400 font-normal">
+                    Collector this round
+                  </p>
+
+                  <div className="flex items-baseline gap-1.5 mt-0.5">
+                    <h2 className="text-lg font-bold text-slate-900">
+                      {openRound.collectorName ?? "Unassigned"}
+                    </h2>
+
+                    {openRound.collectorRotationOrder && (
+                      <span className="text-xs text-slate-400 font-medium">
+                        · position {openRound.collectorRotationOrder}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <span className="bg-emerald-900 text-slate-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  COLLECTS {targetAmount.toLocaleString()}
+                </span>
+              </div>
+
+              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-[#0e4d36] h-full rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+
+              <p className="text-xs text-slate-500 font-normal">
+                Collected{" "}
+                <span className="font-bold text-slate-900">
+                  {collectedAmount.toLocaleString()} FCFA
+                </span>{" "}
+                of{" "}
+                <span className="font-bold text-slate-900">
+                  {targetAmount.toLocaleString()} FCFA
+                </span>
               </p>
-              <div className="flex items-baseline gap-1.5 mt-0.5">
-                <h2 className="text-lg font-bold text-slate-900">
-                  {openRound?.collectorName ?? "Unassigned"}
-                </h2>
-                {openRound?.collectorRotationOrder && (
-                  <span className="text-xs text-slate-400 font-medium">
-                    · position {openRound.collectorRotationOrder}
-                  </span>
-                )}
+            </div>
+
+            <div className="bg-white rounded-2xl p-3 border border-slate-300/80">
+              <h3 className="text-sm font-bold text-slate-900 m-1.5">
+                Positions
+              </h3>
+
+              <div className="divide-y divide-slate-300/80">
+                {group.positions.map((pos: Position) => (
+                  <PositionCard
+                    key={pos.id}
+                    groupId={group.id}
+                    roundId={openRound.id}
+                    roundNumber={openRound.number}
+                    defaultAmount={group.amount}
+                    position={pos}
+                    paymentId={paymentByPosition.get(pos.id)?.id}
+                    currentAmount={paymentByPosition.get(pos.id)?.amount}
+                  />
+                ))}
               </div>
             </div>
 
-            {/* COLLECTS Badge */}
-            <span className="bg-emerald-900 text-slate-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              COLLECTS {targetAmount.toLocaleString()}
-            </span>
+            <Link
+              href={`/groups/${groupId}/rounds/${openRound.id}/close`}
+              className="mt-3 block w-full rounded-md border border-amber-300 bg-amber-50 py-3 text-center text-sm font-semibold text-amber-700"
+            >
+              Close round {openRound.number} short
+            </Link>
+
+            <p className="p-3 text-slate-400 text-[13px]">
+              Every position pays every round, including the collector&apos;s. A
+              position cannot pay twice: the app refuses it.
+            </p>
+          </>
+        ) : (
+          <div className="bg-white rounded-2xl p-6 border border-slate-300/80 text-center">
+            <h2 className="text-lg font-bold text-slate-900">
+              Round {group.currentRoundNumber ?? 1} closed
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+              There is currently no open round for this group. Open the next
+              round when you&apos;re ready.
+            </p>
+
+            <Link
+              href={`/groups/${groupId}/members`}
+              className="mt-5 block w-full rounded-md bg-slate-900 py-3 text-center text-sm font-semibold text-white"
+            >
+              Go to Members
+            </Link>
           </div>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-            <div
-              className="bg-[#0e4d36] h-full rounded-full transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-
-          {/* Collected vs Target Footer */}
-          <p className="text-xs text-slate-500 font-normal">
-            Collected{" "}
-            <span className="font-bold text-slate-900">
-              {collectedAmount.toLocaleString()} FCFA
-            </span>{" "}
-            of{" "}
-            <span className="font-bold text-slate-900">
-              {targetAmount.toLocaleString()} FCFA
-            </span>
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-3 border border-slate-300/80">
-          <h3 className="text-sm font-bold text-slate-900 m-1.5">Positions</h3>
-
-          <div className="divide-y divide-slate-300/80">
-            {group.positions.map((pos: Position) => (
-              <PositionCard
-                key={pos.id}
-                groupId={group.id}
-                roundId={openRound?.id ?? 0}
-                roundNumber={openRound?.number ?? 1}
-                defaultAmount={group.amount}
-                position={pos}
-                paymentId={paymentByPosition.get(pos.id)?.id}
-                currentAmount={paymentByPosition.get(pos.id)?.amount}
-              />
-            ))}
-          </div>
-        </div>
-
-        {openRound && (
-          <Link
-            href={`/groups/${groupId}/rounds/${openRound.id}/close`}
-            className="mt-3 block w-full rounded-md border border-amber-300 bg-amber-50 py-3 text-center text-sm font-semibold text-amber-700"
-          >
-            Close round {openRound.number} short
-          </Link>
         )}
-        <p className="p-3 text-slate-400 text-[13px]">
-          Every position pays every round, including the collector&apos;s. A
-          position cannot pay twice: the app refuses it.
-        </p>
       </div>
     </div>
   );

@@ -30,3 +30,7 @@ Thumbs.db
 .claude/
 .windsurf/
 skills-lock.json
+
+# Local HTTP client/session cookies
+cookies.txt
+**/cookies.txt
