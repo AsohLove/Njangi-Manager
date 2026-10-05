@@ -22,7 +22,7 @@ function LoginForm() {
     mutationFn: loginAdmin,
     onSuccess: () => {
       setError("");
-      const redirect = searchParams.get("redirect") || "/";
+      const redirect = searchParams.get("redirect") || "/groups";
       router.push(redirect);
     },
     onError: (err) => {

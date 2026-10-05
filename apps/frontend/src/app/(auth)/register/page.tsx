@@ -34,7 +34,7 @@ export default function RegisterPage() {
 
    onSuccess: () => {
      setError("");
-     router.push("/");
+     router.push("/groups");
    },
 
    onError: (err) => {
