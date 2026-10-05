@@ -14,7 +14,7 @@ export default function CreateGroupPage() {
   const handleSubmit = (payload: Parameters<typeof createGroup.mutate>[0]) => {
     createGroup.mutate(payload, {
       onSuccess: () => {
-        router.push("/");
+        router.push("/groups");
       },
     });
   };
@@ -23,7 +23,7 @@ export default function CreateGroupPage() {
     <div className="space-y-4 w-full h-screen">
       <Card>
         <h1 className="flex items-center gap-2 text-2xl font-bold leading-tight">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
+          <Link href="/groups" className="hover:opacity-80 transition-opacity">
             <ArrowLeft size={20} />
           </Link>
           Create a group
