@@ -3,6 +3,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
   title: "Njangi App",
   description:
     "A njangi notebook to help you keep track of your payments, expenses, and more.",
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -19,6 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         className="min-h-full bg-slate-50 text-slate-900"
         suppressHydrationWarning
       >
+        <ServiceWorkerRegistration />
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
