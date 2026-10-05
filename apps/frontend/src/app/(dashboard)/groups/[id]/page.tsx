@@ -88,7 +88,7 @@ export default function GroupPage() {
             {openRound ? (
               <>
                 <Link
-                  href="/"
+                  href="/groups"
                   className="flex items-center text-lg font-bold hover:opacity-80 transition-opacity"
                 >
                   <ChevronLeft size={24} />
@@ -102,7 +102,7 @@ export default function GroupPage() {
             ) : (
               <>
                 <Link
-                  href="/"
+                  href="/groups"
                   className="flex items-center text-lg font-bold hover:opacity-80 transition-opacity"
                 >
                   <ChevronLeft size={24} />

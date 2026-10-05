@@ -64,8 +64,8 @@ const steps = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      {/* Navigation */}{" "}
+    <main className="min-h-screen bg-emerald-50 text-slate-900">
+     
       <header className="border-b border-slate-200 bg-white">
         {" "}
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
@@ -94,7 +94,7 @@ export default function HomePage() {
           </nav>
         </div>
       </header>
-      {/* Hero */}
+
       <section className="overflow-hidden border-b border-slate-200">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:items-center lg:gap-12 lg:py-28">
           <div>
@@ -129,7 +129,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Dashboard preview */}
+         
           <div className="mx-auto w-full max-w-xl lg:max-w-none">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2.5 shadow-xl sm:p-4">
               <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
@@ -189,7 +189,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      {/* How it works */}
+     
       <section className="bg-slate-50 py-14 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
@@ -229,7 +229,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      {/* Features */}
+    
       <section className="py-14 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="max-w-2xl">
@@ -269,7 +269,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      {/* Why section */}
+      
       <section className="bg-slate-950 py-14 text-white sm:py-20">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 sm:gap-12 lg:grid-cols-2 lg:items-center">
           <div>
@@ -293,7 +293,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      {/* Final CTA */}
+      
       <section className="py-14 sm:py-20">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -312,7 +312,7 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-      {/* Footer */}
+     
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-center text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8 sm:text-left">
           <p>
