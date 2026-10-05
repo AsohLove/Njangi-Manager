@@ -12,10 +12,11 @@ export interface Group {
   orderMode: string;
   shareCode: string;
   createdAt: string;
-  currentRoundNumber: number;
-  collectorName: string;
-  collectorPositionId: number;
+  currentRoundNumber: number | null;
+  collectorName: string | null;
+  collectorPositionId: number | null;
   paidCount: number;
+  collectedAmount: number;
   totalMembers: number;
   totalPositions: number;
 }
@@ -42,7 +43,7 @@ export function GroupCard({ group }: GroupCardProps) {
   const totalPositions = group.totalPositions ?? 0;
   const progressPercent =
     totalPositions > 0
-      ? Math.min((group.paidCount ?? 0) / totalPositions, 1) * 100
+      ? Math.min((group.collectedAmount ?? 0) / (totalPositions * group.amount), 1) * 100
       : 0;
 
   return (
@@ -55,7 +56,7 @@ export function GroupCard({ group }: GroupCardProps) {
           {group.name}
         </h3>
         <span className="shrink-0 text-[10px] font-semibold tracking-wider text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full uppercase">
-          Round {group.currentRoundNumber ?? "To"} Open
+          {group.currentRoundNumber ? `Round ${group.currentRoundNumber} Open` : "No open round"}
         </span>
       </div>
 
@@ -67,7 +68,7 @@ export function GroupCard({ group }: GroupCardProps) {
         <span>{formattedOrderMode}</span>
 
         {" · "}
-        <span>{group.totalMembers} positions</span>
+        <span>{group.totalMembers} members · {totalPositions} positions</span>
       </div>
       <div className="rounded-lg bg-gray-200  text-xs text-gray-600">
         <div
@@ -81,11 +82,11 @@ export function GroupCard({ group }: GroupCardProps) {
         <span className="text-xs text-gray-600">
           Collected:{" "}
           <span className="font-bold">
-            {group.paidCount * group.amount} FCFA {" "}
+            {group.collectedAmount.toLocaleString()} FCFA{" "}
           </span>
           of{" "}
           <span className="font-bold">
-            {totalPositions * group.amount} FCFA
+            {(totalPositions * group.amount).toLocaleString()} FCFA
           </span>
         </span>
         {" · "}

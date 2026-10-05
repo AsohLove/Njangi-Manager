@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -28,15 +28,17 @@ export default function LedgerPage() {
   const { data: group } = useGroup(groupId);
 
   const apiFilter = filter === "funds" || filter === "all" ? "all" : filter;
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ["ledger", groupId, apiFilter],
-    queryFn: () => getLedger(groupId, apiFilter),
+    queryFn: ({ pageParam }) => getLedger(groupId, apiFilter, pageParam),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     enabled: Number.isInteger(groupId),
   });
 
   const allEntries = useMemo(
-    () => (data?.entries ?? []) as LedgerEntry[],
-    [data?.entries],
+    () => (data?.pages.flatMap((page) => page.entries) ?? []) as LedgerEntry[],
+    [data?.pages],
   );
 
   const rounds = useMemo(() => {
@@ -174,10 +176,15 @@ export default function LedgerPage() {
           )}
         </section>
 
-        {data?.next && (
-          <p className="text-center text-xs text-slate-400">
-            Older entries available
-          </p>
+        {hasNextPage && (
+          <button
+            type="button"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="w-full rounded-lg border border-slate-300 bg-white py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
+          >
+            {isFetchingNextPage ? "Loading older entries..." : "Load older entries"}
+          </button>
         )}
 
         <p className="px-1 text-xs leading-4 text-slate-500">

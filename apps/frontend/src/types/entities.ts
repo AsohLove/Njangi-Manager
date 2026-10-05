@@ -27,10 +27,11 @@ export type GroupProps = {
   orderMode: string;
   shareCode: string;
   createdAt: string;
-  currentRoundNumber: number;
-  collectorName: string;
-  collectorPositionId: number;
+  currentRoundNumber: number | null;
+  collectorName: string | null;
+  collectorPositionId: number | null;
   paidCount: number;
+  collectedAmount: number;
   totalMembers: number;
   totalPositions: number;
 };

@@ -218,9 +218,14 @@ export async function getLedger(
     | "fine"
     | "spending"
     | "adjustment",
+  after?: number,
 ) {
   const response = await apiClient.get(`/groups/${groupId}/ledger`, {
-    params: { limit: 100, ...(type && type !== "all" ? { type } : {}) },
+    params: {
+      limit: 100,
+      ...(type && type !== "all" ? { type } : {}),
+      ...(after ? { after } : {}),
+    },
   });
   return response.data;
 }

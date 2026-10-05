@@ -74,8 +74,8 @@ export class GroupsService {
                     member: true,
                   },
                 },
-                _count: {
-                  select: { payments: true },
+                payments: {
+                  select: { amount: true },
                 },
               },
             },
@@ -104,7 +104,9 @@ export class GroupsService {
         currentRoundNumber: currentRound?.number ?? null,
         collectorName: collectorMember?.fullName ?? null,
         collectorPositionId: currentRound?.collectorPositionId ?? null,
-        paidCount: currentRound ? currentRound._count.payments : 0,
+        paidCount: currentRound?.payments.length ?? 0,
+        collectedAmount:
+          currentRound?.payments.reduce((sum, payment) => sum + payment.amount, 0) ?? 0,
       };
     });
   }

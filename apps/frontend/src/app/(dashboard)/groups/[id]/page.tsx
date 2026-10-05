@@ -57,7 +57,7 @@ export default function GroupPage() {
       : 0;
 
   const lastClosedRound =
-    group.activeCycle?.rounds
+    (group.activeCycle?.rounds ?? [])
       .filter(
         (round: { number: number; status: "open" | "closed" }) =>
           round.status === "closed",
@@ -78,7 +78,7 @@ export default function GroupPage() {
     const shareText =
       `🤝 Join / View ${group.name} on Njangi Manager\n` +
       `💰 Contribution: ${group.amount.toLocaleString()} XAF (${group.frequency})\n` +
-      `👥 Members: ${group.totalMembers} | Round ${group.currentRoundNumber ?? 1}\n` +
+      `👥 Members: ${group.totalMembers} | Round ${openRound?.number ?? 1}\n` +
       `🎯 Current Collector: ${group.openRound?.collectorName ?? "N/A"}\n\n` +
       `Click the link to view complete group details, position lists, and rules:`;
     if (navigator.share) {
