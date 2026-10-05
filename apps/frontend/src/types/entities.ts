@@ -66,6 +66,10 @@ export interface ActiveCycle {
   number: number;
   status: CycleStatus;
   startedAt: string;
+  rounds: {
+    number: number;
+    status: "open" | "closed";
+  }[];
 }
 
 export interface RoundPayment {

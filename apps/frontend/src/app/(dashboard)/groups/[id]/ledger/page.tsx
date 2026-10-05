@@ -11,7 +11,6 @@ import { Card } from "@/components/ui/Card";
 import { LedgerEntry, FilterKey } from "@/types/entities";
 import { formatEntryAmount, formatEntry } from "@/lib/utils";
 
-
 const filters: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
   { key: "payment", label: "Payments" },
@@ -20,11 +19,12 @@ const filters: { key: FilterKey; label: string }[] = [
   { key: "funds", label: "Fund" },
 ];
 
-
 export default function LedgerPage() {
   const params = useParams();
   const groupId = Number(params.id);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [roundFilter, setRoundFilter] = useState<string>("all");
+  const [memberFilter, setMemberFilter] = useState<string>("all");
   const { data: group } = useGroup(groupId);
 
   const apiFilter = filter === "funds" || filter === "all" ? "all" : filter;
@@ -34,15 +34,49 @@ export default function LedgerPage() {
     enabled: Number.isInteger(groupId),
   });
 
+  const allEntries = useMemo(
+    () => (data?.entries ?? []) as LedgerEntry[],
+    [data?.entries],
+  );
+
+  const rounds = useMemo(() => {
+    return Array.from(
+      new Map(
+        allEntries
+          .filter((entry) => entry.round_number != null)
+          .map((entry) => [entry.round_id, entry.round_number]),
+      ).entries(),
+    ).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
+  }, [allEntries]);
+
+  const members = useMemo(() => {
+    return Array.from(
+      new Map(
+        allEntries
+          .filter((entry) => entry.member_id != null)
+          .map((entry) => [entry.member_id, entry.member_name]),
+      ).entries(),
+    ).sort((a, b) => (a[1] ?? "").localeCompare(b[1] ?? ""));
+  }, [allEntries]);
+
   const entries = useMemo(() => {
-    const allEntries = (data?.entries ?? []) as LedgerEntry[];
-    if (filter === "funds") {
-      return allEntries.filter(
-        (entry) => entry.type === "spending" || entry.type === "adjustment",
-      );
-    }
-    return allEntries;
-  }, [data?.entries, filter]);
+    return allEntries.filter((entry) => {
+      const matchesType =
+        filter === "funds"
+          ? entry.type === "spending" || entry.type === "adjustment"
+          : filter === "all"
+            ? true
+            : entry.type === filter;
+
+      const matchesRound =
+        roundFilter === "all" || String(entry.round_id) === roundFilter;
+
+      const matchesMember =
+        memberFilter === "all" || String(entry.member_id) === memberFilter;
+
+      return matchesType && matchesRound && matchesMember;
+    });
+  }, [allEntries, filter, roundFilter, memberFilter]);
 
   return (
     <div className="min-h-screen bg-slate-100 pb-10">
@@ -79,6 +113,35 @@ export default function LedgerPage() {
               {item.label}
             </button>
           ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            value={roundFilter}
+            onChange={(event) => setRoundFilter(event.target.value)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700"
+          >
+            <option value="all">All rounds</option>
+
+            {rounds.map(([roundId, roundNumber]) => (
+              <option key={roundId} value={String(roundId)}>
+                Round {roundNumber}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={memberFilter}
+            onChange={(event) => setMemberFilter(event.target.value)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700"
+          >
+            <option value="all">All members</option>
+
+            {members.map(([memberId, memberName]) => (
+              <option key={memberId} value={String(memberId)}>
+                {memberName}
+              </option>
+            ))}
+          </select>
         </div>
 
         <section className="overflow-hidden rounded-md border border-slate-300 bg-white">

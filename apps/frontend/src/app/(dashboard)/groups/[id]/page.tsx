@@ -56,6 +56,20 @@ export default function GroupPage() {
       ? Math.min((collectedAmount / targetAmount) * 100, 100)
       : 0;
 
+  const lastClosedRound =
+    group.activeCycle?.rounds
+      .filter(
+        (round: { number: number; status: "open" | "closed" }) =>
+          round.status === "closed",
+      )
+      .reduce(
+        (
+          latest: number,
+          round: { number: number; status: "open" | "closed" },
+        ) => Math.max(latest, round.number),
+        0,
+      ) || 1;
+
   const handleShare = () => {
     const shareUrl = `${window.location.origin}/members/${group.shareCode}`;
 
@@ -84,7 +98,7 @@ export default function GroupPage() {
     <div className="w-full max-w-full mx-auto min-h-screen bg-slate-100 pb-8 space-y-3 font-sans">
       <Card>
         <div className="flex justify-between items-center gap-2">
-          <div className="flex flex-col gap-1leading-tight">
+          <div className="flex flex-col gap-1 leading-tight">
             {openRound ? (
               <>
                 <Link
@@ -119,7 +133,7 @@ export default function GroupPage() {
           <button
             onClick={handleShare}
 
-            className="flex cursor-pointer item-center py-1 px-3 text-sm text-slate-100 rounded-2xl bg-slate-900/40"
+            className="flex cursor-pointer items-center py-1 px-3 text-sm text-slate-100 rounded-2xl bg-slate-900/40"
           >
             Share Page
           </button>
@@ -209,7 +223,7 @@ export default function GroupPage() {
         ) : (
           <div className="bg-white rounded-2xl p-6 border border-slate-300/80 text-center">
             <h2 className="text-lg font-bold text-slate-900">
-              Round {group.currentRoundNumber ?? 1} closed
+              Round {lastClosedRound} closed
             </h2>
 
             <p className="mt-2 text-sm text-slate-500">
