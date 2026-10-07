@@ -40,14 +40,12 @@ export function RecordPaymentDrawer({
   );
   const [error, setError] = React.useState("");
 
-  React.useEffect(() => {
-    if (open) {
-      setAmount(
-        paymentId !== undefined ? defaultAmount - currentAmount : defaultAmount,
-      );
-      setError("");
-    }
-  }, [open, paymentId, defaultAmount, currentAmount]);
+  const resetForm = () => {
+    setAmount(
+      paymentId !== undefined ? defaultAmount - currentAmount : defaultAmount,
+    );
+    setError("");
+  };
 
   const { mutate: recordPayment, isPending } = useCreatePayment(groupId);
   const { mutate: updatePayment, isPending: isUpdating } =
@@ -93,7 +91,7 @@ export function RecordPaymentDrawer({
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (nextOpen) setError("");
+        if (nextOpen) resetForm();
       }}
     >
       <DrawerTrigger

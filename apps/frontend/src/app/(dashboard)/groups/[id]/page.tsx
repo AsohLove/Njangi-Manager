@@ -95,7 +95,7 @@ export default function GroupPage() {
   };
 
   return (
-    <div className="w-full max-w-full mx-auto min-h-screen bg-slate-100 pb-8 space-y-3 font-sans">
+    <div className="w-full max-w-lg mx-auto min-h-screen bg-slate-100 pb-8 space-y-3 font-sans">
       <Card>
         <div className="flex justify-between items-center gap-2">
           <div className="flex flex-col gap-1 leading-tight">

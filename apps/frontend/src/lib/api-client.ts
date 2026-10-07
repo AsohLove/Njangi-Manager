@@ -48,20 +48,6 @@ apiClient.interceptors.response.use(
   },
 );
 
-function toFormData(
-  payload: Record<string, string | number | File | null | undefined>,
-) {
-  const formData = new FormData();
-
-  Object.entries(payload).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      formData.append(key, String(value));
-    }
-  });
-
-  return formData;
-}
-
 export async function loginAdmin(credentials: loginDto) {
   const response = await apiClient.post("/auth/login", credentials);
   const user = response.data.user;

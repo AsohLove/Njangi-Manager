@@ -102,7 +102,6 @@ export default function GroupFundPage() {
 
   const balance = fund?.balance ?? 0;
   const paidFines = fund?.paid_fines ?? 0;
-  const adjustments = fund?.adjustments ?? 0;
   const spendingTotal = fund?.spending ?? 0;
   const history = fund?.history ?? [];
 
